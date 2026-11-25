@@ -33,8 +33,7 @@
 .scrolly.is-3d .stage__vignette {
   display: block; position: absolute; inset: 0; pointer-events: none;
   background:
-    radial-gradient(120% 90% at 60% 50%, transparent 45%, rgba(2, 5, 14, 0.75) 100%),
-    linear-gradient(90deg, rgba(3, 7, 18, 0.78) 0%, rgba(3, 7, 18, 0.35) 38%, transparent 60%);
+    linear-gradient(90deg, rgba(6, 14, 38, 0.82) 0%, rgba(6, 14, 38, 0.45) 36%, transparent 58%);
 }
 .scrolly.is-3d .stage__flash { display: block; position: absolute; inset: 0; pointer-events: none; opacity: 0; background: radial-gradient(60% 60% at 55% 45%, rgba(255, 214, 130, 0.9), rgba(255, 188, 54, 0) 70%); mix-blend-mode: screen; }
 
@@ -47,6 +46,7 @@
 }
 .scrolly.is-3d .beat.is-on { visibility: visible; pointer-events: auto; }
 .scrolly.is-3d .beat--hero { width: min(640px, 46vw); }
+.scrolly.is-3d .beat--top { top: calc(var(--header-h) + 8vh); translate: none; }
 .scrolly.is-3d .beat--center { left: 50%; translate: -50% -50%; width: min(900px, 86vw); text-align: center; }
 .scrolly.is-3d .beat--center h2 { font-size: clamp(2.6rem, 6.4vw, 6.4rem); }
 .scrolly.is-3d .beat--final { width: min(620px, 46vw); }
@@ -66,14 +66,13 @@
 
 .scrolly.is-3d .bigword {
   display: grid; place-items: center; position: absolute; inset: 0; z-index: 2; pointer-events: none; visibility: hidden; opacity: 0;
-  font-family: var(--font-display); font-weight: 700; text-transform: uppercase; line-height: 1;
-  font-size: clamp(5rem, 21vw, 22rem); letter-spacing: 0.02em;
-  color: transparent; -webkit-text-stroke: 2px rgba(255, 188, 54, 0.95);
-  text-shadow: 0 0 80px rgba(255, 188, 54, 0.45);
+  font-family: var(--font-display); font-weight: 700; text-transform: uppercase; line-height: 1; font-style: italic;
+  font-size: clamp(5rem, 19vw, 19rem); letter-spacing: 0.01em;
+  color: var(--gold); -webkit-text-stroke: 0.06em var(--ink); paint-order: stroke fill;
+  text-shadow: 0.06em 0.06em 0 var(--ink), 0.1em 0.1em 0 rgba(10, 20, 48, 0.35);
   will-change: opacity, transform;
 }
-.scrolly.is-3d .bigword--slam { color: rgba(255, 255, 255, 0.92); -webkit-text-stroke: 0; text-shadow: 0 0 60px rgba(255, 120, 40, 0.7), 0 10px 0 rgba(255, 188, 54, 0.9); font-style: italic; }
-
+.scrolly.is-3d .bigword--slam { color: #ff7a2b; }
 /* HUD */
 .scrolly.is-3d .hud { display: block; position: absolute; inset: 0; pointer-events: none; z-index: 4; }
 .hud__rail { position: absolute; right: 30px; top: 50%; height: 34vh; translate: 0 -50%; width: 2px; background: rgba(255, 255, 255, 0.16); border-radius: 2px; overflow: hidden; }

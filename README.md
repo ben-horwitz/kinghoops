@@ -24,18 +24,18 @@ Shared files:
 - `assets/img/`: all photos, downloaded from the Wix site (file names are the original Wix media IDs).
 - `assets/video/`: hero and "On Screen" videos with poster images.
 
-## The 3D home page
+## The animated home page
 
-The home page opens with a scroll-driven 3D story: a jump shot (with the mission and impact stats), then a drive and dunk over a defender (with the programs and history). Everything is built in code with [three.js](https://threejs.org) loaded from a CDN; there are no 3D model files.
+The home page opens with a scroll-driven cartoon story drawn in a flat clip-art style. First a jump shot plays alongside the mission and impact stats. Then a drive and dunk over a defender plays alongside the programs and history. It is drawn in code on an HTML canvas, with no libraries and no image files.
 
-- `assets/js/court3d.js`: the scene, the jointed players, and the timeline. Every frame is a function of scroll progress `p` (0 to 1).
+- `assets/js/court2d.js`: the court, players, crowd and timeline. Every frame is a function of scroll progress `p` (0 to 1).
   - Poses are keyframes such as `SET`, `RELEASE` or `SLAM`, tracked in `KEYS1` / `KEYS2` / `KEYSD`.
   - Camera moves are in `CAM`.
   - Scores happen at `SCORE1` / `SCORE2`.
 - `assets/css/home3d.css`: layout for the story text, scoreboard and progress rail.
 - **Text:** each block in `index.html` has `data-p="start,end"`, which sets when it shows during the scroll.
-- **Fallback:** without WebGL, the same text shows as a plain stacked section.
-- **Classic version:** the pre-3D site is saved on the `classic` branch (tag `v1-classic`).
+- **Fallback:** if the canvas can't run, the same text shows as a plain stacked section.
+- **Classic version:** the original site is saved on the `classic` branch (tag `v1-classic`).
 
 ## Run locally
 
