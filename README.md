@@ -24,17 +24,15 @@ Shared files:
 - `assets/img/`: all photos, downloaded from the Wix site (file names are the original Wix media IDs).
 - `assets/video/`: hero and "On Screen" videos with poster images.
 
-## The animated home page
+## The home page story
 
-The home page opens with a scroll-driven cartoon story drawn in a flat clip-art style. First a jump shot plays alongside the mission and impact stats. Then a drive and dunk over a defender plays alongside the programs and history. It is drawn in code on an HTML canvas, with no libraries and no image files.
+The home page opens with real KING Hoops game footage: a drive and dunk from `assets/video/slow-mo-slam.mp4`, 6.6s to 12.4s. Scrolling moves through the play frame by frame. Each player is traced with hand-sketched pencil lines, and a small scoreboard counts down the final 6 seconds to the buzzer-beating dunk.
 
-- `assets/js/court2d.js`: the court, players, crowd and timeline. Every frame is a function of scroll progress `p` (0 to 1).
-  - Poses are keyframes such as `SET`, `RELEASE` or `SLAM`, tracked in `KEYS1` / `KEYS2` / `KEYSD`.
-  - Camera moves are in `CAM`.
-  - Scores happen at `SCORE1` / `SCORE2`.
-- `assets/css/home3d.css`: layout for the story text, scoreboard and progress rail.
+- `assets/story/frames/`: 88 JPEG frames taken from the clip at 15 fps.
+- `assets/story/poses.json`: player skeletons, traced once from those frames with the MoveNet pose-detection model. Visitors' browsers don't run the model.
+- `assets/js/story.js`: draws each frame, then the sketchy traces over it, and handles the scoreboard and text timing.
+- `assets/css/home3d.css`: layout for the story text, scoreboard and skip button.
 - **Text:** each block in `index.html` has `data-p="start,end"`, which sets when it shows during the scroll.
-- **Fallback:** if the canvas can't run, the same text shows as a plain stacked section.
 - **Classic version:** the original site is saved on the `classic` branch (tag `v1-classic`).
 
 ## Run locally
