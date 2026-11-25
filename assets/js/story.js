@@ -26,36 +26,26 @@
     const VW = data.w, VH = data.h;
     const pDunk = P_START + ((DUNK_T - data.t0) * data.fps / (N - 1)) * (P_END - P_START);
 
-    /* ---- tracks: fill short detection gaps and smooth jitter ---- */
-    const tracks = {}; // id -> array[N] of keypoints|null
-    data.frames.forEach((fr, i) => fr.people.forEach((pp) => {
-      (tracks[pp.id] = tracks[pp.id] || new Array(N).fill(null))[i] = pp.k;
-    }));
-    Object.keys(tracks).forEach((id) => {
-      const tr = tracks[id];
-      for (let i = 0; i < N; i++) {
-        if (tr[i]) continue;
-        let a = i - 1; while (a >= 0 && !tr[a] && i - a <= 3) a--;
-        if (a >= 0 && tr[a] && i - a <= 3) tr[i] = tr[a].map((k) => [k[0], k[1], k[2] * 0.85]);
-      }
-    });
-    const people = []; // per frame: smoothed list of keypoint arrays
+    /* ---- the KING player's traced pose per frame: bridge short gaps, then smooth ---- */
+    const raw = data.frames.map((f) => f.king);
     for (let i = 0; i < N; i++) {
-      const list = [];
-      Object.keys(tracks).forEach((id) => {
-        const tr = tracks[id];
-        if (!tr[i]) return;
-        list.push(tr[i].map((k, j) => {
-          let x = 0, y = 0, w = 0;
-          for (let d = -1; d <= 1; d++) {
-            const q = tr[i + d]; if (!q || q[j][2] < MIN_CONF) continue;
-            const ww = d === 0 ? 2 : 1; x += q[j][0] * ww; y += q[j][1] * ww; w += ww;
-          }
-          return w ? [x / w, y / w, k[2]] : k;
-        }));
-      });
-      people.push(list);
+      if (raw[i]) continue;
+      let a = i - 1, b = i + 1;
+      while (a >= 0 && !raw[a]) a--;
+      while (b < N && !raw[b]) b++;
+      if (a >= 0 && b < N && b - a <= 5) {
+        const t = (i - a) / (b - a);
+        raw[i] = raw[a].map((k, j) => [k[0] + (raw[b][j][0] - k[0]) * t, k[1] + (raw[b][j][1] - k[1]) * t, Math.min(k[2], raw[b][j][2])]);
+      }
     }
+    const king = raw.map((k, i) => k && k.map((q, j) => {
+      let x = 0, y = 0, w = 0;
+      for (let d = -2; d <= 2; d++) {
+        const r = raw[i + d]; if (!r || r[j][2] < MIN_CONF) continue;
+        const ww = 3 - Math.abs(d); x += r[j][0] * ww; y += r[j][1] * ww; w += ww;
+      }
+      return w ? [x / w, y / w, q[2]] : q;
+    }));
 
     /* ---- frames ---- */
     const imgs = new Array(N), ready = new Array(N).fill(false);
@@ -85,58 +75,57 @@
     new ResizeObserver(resize).observe(stage);
     resize();
 
-    /* ---- sketch strokes ---- */
-    function sketchLine(ax, ay, bx, by, seed, amp, passes) {
+    /* ---- relaxed hand-drawn strokes ---- */
+    function wobblyLine(ax, ay, bx, by, seed, amp) {
       const dx = bx - ax, dy = by - ay, len = Math.hypot(dx, dy) || 1;
       const nx = -dy / len, ny = dx / len;
-      for (let k = 0; k < passes; k++) {
-        const s = seed * 7.13 + k * 3.7;
-        const over = 0.06 + hash(s) * 0.08;               // pencil overshoot past the joint
-        const j = (q) => (hash(s + q) - 0.5) * amp;
-        const x0 = ax - dx * over + j(1), y0 = ay - dy * over + j(2);
-        const x1 = bx + dx * over * 0.7 + j(3), y1 = by + dy * over * 0.7 + j(4);
-        const bow = (hash(s + 5) - 0.5) * amp * 1.6;
-        const cx = (x0 + x1) / 2 + nx * bow, cy = (y0 + y1) / 2 + ny * bow;
-        ctx.beginPath(); ctx.moveTo(x0, y0); ctx.quadraticCurveTo(cx, cy, x1, y1); ctx.stroke();
-      }
+      const j = (q) => (hash(seed + q) - 0.5) * amp;
+      const over = 0.03 + hash(seed) * 0.04;
+      const x0 = ax - dx * over + j(1), y0 = ay - dy * over + j(2);
+      const x1 = bx + dx * over + j(3), y1 = by + dy * over + j(4);
+      const c1 = j(5) * 1.4, c2 = j(6) * 1.4;
+      ctx.beginPath(); ctx.moveTo(x0, y0);
+      ctx.bezierCurveTo(x0 + dx * 0.33 + nx * c1, y0 + dy * 0.33 + ny * c1, x0 + dx * 0.66 + nx * c2, y0 + dy * 0.66 + ny * c2, x1, y1);
+      ctx.stroke();
     }
-    function sketchCircle(x, y, r, seed, amp) {
-      for (let k = 0; k < 2; k++) {
-        const s = seed * 5.3 + k * 11.1, a0 = hash(s) * Math.PI * 2;
-        ctx.beginPath();
-        for (let t = 0; t <= 1.08; t += 0.06) {
-          const a = a0 + t * Math.PI * 2, rr = r * (1 + (hash(s + Math.floor(t * 9)) - 0.5) * 0.18) + (hash(s + 1) - 0.5) * amp;
-          const px = x + Math.cos(a) * rr, py = y + Math.sin(a) * rr * 1.08;
-          t === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
-        }
-        ctx.stroke();
+    function wobblyCircle(x, y, r, seed, amp) {
+      ctx.beginPath();
+      const a0 = hash(seed) * Math.PI * 2;
+      for (let t = 0; t <= 1.04; t += 0.04) {
+        const a = a0 + t * Math.PI * 2;
+        const rr = r + Math.sin(t * Math.PI * 4 + hash(seed + 2) * 6) * amp * 0.5;
+        const px = x + Math.cos(a) * rr, py = y + Math.sin(a) * rr * 1.06;
+        t === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
       }
+      ctx.stroke();
     }
-    function drawTraces(fi, ox, oy, sw, sh, boil) {
-      const amp = Math.max(2, sh * 0.005);
+    function drawTrace(fi, ox, oy, sw, sh, boil) {
+      const k = king[fi];
+      if (!k) return;
+      const amp = Math.max(1.2, sh * 0.0028);
+      const base = Math.max(1.6, sh / 420);
+      const pt = (j) => [ox + k[j][0] * sw, oy + k[j][1] * sh];
       ctx.lineCap = "round"; ctx.lineJoin = "round";
-      people[fi].forEach((k, pi) => {
-        const pt = (j) => [ox + k[j][0] * sw, oy + k[j][1] * sh];
-        const seedBase = boil * 97 + pi * 31;
-        // soft graphite shadow pass, then crisp pencil passes
-        for (const pass of [0, 1]) {
-          ctx.strokeStyle = pass ? "rgba(255,255,255,0.82)" : "rgba(255,255,255,0.18)";
-          ctx.lineWidth = (pass ? 1.6 : 4) * (sh / 900 + 0.5);
-          BONES.forEach((b, bi) => {
-            const A = k[b[0]], B = k[b[1]];
-            if (A[2] < MIN_CONF || B[2] < MIN_CONF) return;
-            const a = pt(b[0]), c = pt(b[1]);
-            sketchLine(a[0], a[1], c[0], c[1], seedBase + bi * 13 + pass * 101, amp * (pass ? 1 : 1.6), pass ? 2 : 1);
-          });
-        }
-        const ls = k[5], rs = k[6];
-        if (k[0][2] > MIN_CONF && ls[2] > MIN_CONF && rs[2] > MIN_CONF) {
-          const sd = Math.hypot((ls[0] - rs[0]) * sw, (ls[1] - rs[1]) * sh);
-          const n = pt(0);
-          ctx.strokeStyle = "rgba(255,255,255,0.8)"; ctx.lineWidth = 1.5 * (sh / 900 + 0.5);
-          sketchCircle(n[0], n[1] - sd * 0.05, Math.max(6, sd * 0.42), seedBase + 7, amp);
-        }
-      });
+      ctx.save();
+      ctx.shadowColor = "rgba(255, 188, 54, 0.55)"; ctx.shadowBlur = 8;
+      for (const pass of [0, 1]) {
+        ctx.strokeStyle = pass ? "rgba(255, 214, 140, 0.95)" : "rgba(255, 188, 54, 0.28)";
+        ctx.lineWidth = pass ? base : base * 0.8;
+        BONES.forEach((b, bi) => {
+          const A = k[b[0]], B = k[b[1]];
+          if (A[2] < MIN_CONF || B[2] < MIN_CONF) return;
+          const a = pt(b[0]), c = pt(b[1]);
+          wobblyLine(a[0], a[1], c[0], c[1], boil * 53 + bi * 13 + pass * 7.7, amp * (pass ? 1 : 2.2));
+        });
+      }
+      const ls = k[5], rs = k[6];
+      if (k[0][2] > MIN_CONF && ls[2] > MIN_CONF && rs[2] > MIN_CONF) {
+        const sd = Math.hypot((ls[0] - rs[0]) * sw, (ls[1] - rs[1]) * sh);
+        const n = pt(0);
+        ctx.strokeStyle = "rgba(255, 214, 140, 0.95)"; ctx.lineWidth = base;
+        wobblyCircle(n[0], n[1] - sd * 0.05, Math.max(5, sd * 0.38), boil * 31 + 3, amp);
+      }
+      ctx.restore();
     }
 
     /* ---- DOM ---- */
@@ -148,8 +137,6 @@
       const ab = el.getAttribute("data-word").split(",").map(Number);
       return { el, a: ab[0], b: ab[1] };
     });
-    const homeEl = stage.querySelector("[data-score-home]"), clockEl = stage.querySelector("[data-clock]");
-    const periodEl = stage.querySelector("[data-period]"), boardEl = stage.querySelector(".board");
     const flashEl = stage.querySelector(".stage__flash"), loader = stage.querySelector(".stage__loader");
     const fmt = (n, el) => (el.getAttribute("data-prefix") || "") + Math.round(n).toLocaleString() + (el.getAttribute("data-suffix") || "");
     function updateDOM(p) {
@@ -172,13 +159,6 @@
         w.el.style.transform = "rotate(-4deg) scale(" + (0.85 + 0.15 * easeOut(Math.min(1, q * 4))).toFixed(3) + ")";
         w.el.style.visibility = al > 0 ? "visible" : "hidden";
       }
-      // game clock: 6 seconds left, dunk beats the buzzer
-      const c = Math.max(0, 6 * (1 - range(p, P_START, pDunk + 0.004)));
-      if (clockEl) clockEl.textContent = c.toFixed(1);
-      if (homeEl) homeEl.textContent = p >= pDunk ? "88" : "86";
-      const final = p >= pDunk + 0.004;
-      if (periodEl) periodEl.textContent = final ? "Final" : "4th Qtr";
-      if (boardEl) boardEl.classList.toggle("is-final", final);
       if (flashEl) flashEl.style.opacity = (p >= pDunk ? Math.exp(-(p - pDunk) * 220) * 0.45 : 0).toFixed(3);
     }
 
@@ -187,7 +167,7 @@
     function render(p, time) {
       const fiWanted = Math.round(range(p, P_START, P_END) * (N - 1));
       const fi = nearestReady(fiWanted);
-      const boil = Math.floor(time * 6); // lines re-draw a few times a second, like hand-drawn animation
+      const boil = Math.floor(time * 4); // lines gently re-draw a few times a second, like hand-drawn animation
       const key = fi + "|" + boil + "|" + W + "x" + H;
       if (key === lastKey && !needs) return;
       lastKey = key; needs = false;
@@ -204,18 +184,18 @@
         ctx.filter = "blur(28px) grayscale(1) brightness(0.32)";
         ctx.drawImage(im, (W - VW * cs) / 2, (H - VH * cs) / 2, VW * cs, VH * cs);
         sh = H - headerH - 48; sw = sh * VW / VH;
-        ox = Math.min(W - sw - 350, W * 0.64 - sw / 2); oy = headerH + 24;
+        ox = Math.min(W - sw - 60, W * 0.64 - sw / 2); oy = headerH + 24;
       } else {
         const cs = Math.max(W / VW, H / VH);
         sw = VW * cs; sh = VH * cs; ox = (W - sw) / 2; oy = (H - sh) / 2 - H * 0.08;
       }
       ctx.save();
       if (wide) { ctx.beginPath(); ctx.roundRect ? ctx.roundRect(ox, oy, sw, sh, 18) : ctx.rect(ox, oy, sw, sh); ctx.clip(); }
-      ctx.filter = "grayscale(1) contrast(1.15) brightness(0.8)";
+      ctx.filter = "grayscale(0.85) contrast(1.1) brightness(0.85)";
       ctx.drawImage(im, ox, oy, sw, sh);
       ctx.filter = "none";
-      ctx.fillStyle = "rgba(12, 34, 90, 0.28)"; ctx.fillRect(ox, oy, sw, sh);
-      drawTraces(fi, ox, oy, sw, sh, boil);
+      ctx.fillStyle = "rgba(12, 34, 90, 0.22)"; ctx.fillRect(ox, oy, sw, sh);
+      drawTrace(fi, ox, oy, sw, sh, boil);
       ctx.restore();
       if (wide) { ctx.strokeStyle = "rgba(255,255,255,0.18)"; ctx.lineWidth = 1; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(ox, oy, sw, sh, 18) : ctx.rect(ox, oy, sw, sh); ctx.stroke(); }
     }

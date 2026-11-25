@@ -139,7 +139,7 @@
   .board__pbp { font-size: 0.68rem; padding: 6px 8px; }
   .board > div { padding: 6px 10px; }
   .board__team strong, .board__clock strong { font-size: 1.4rem; }
-  .scrolly.is-3d .stage__skip { top: calc(var(--header-h) + 14px); bottom: auto; left: 14px; translate: none; font-size: 0.78rem; padding: 9px 14px; gap: 6px; border-width: 2px; box-shadow: 0 3px 0 var(--ink), 0 8px 20px rgba(0,0,0,.4); }
+  .scrolly.is-3d .stage__skip { top: calc(var(--header-h) + 14px); bottom: auto; left: auto; right: 14px; translate: none; font-size: 0.78rem; padding: 9px 14px; gap: 6px; border-width: 2px; box-shadow: 0 3px 0 var(--ink), 0 8px 20px rgba(0,0,0,.4); }
   .scrolly.is-3d .stage__skip svg { width: 15px; height: 15px; }
   .stage__skip-long { display: none; } .stage__skip-short { display: inline; }
   .scrolly.is-3d .beat__cue { margin-top: 20px; }
