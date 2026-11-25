@@ -26,7 +26,7 @@
 .btn--outline-light:hover { --bg: #fff; --fg: var(--navy); border-color: #fff; }
 
 /* ------------------------------------------------------------ 3D mode */
-.scrolly.is-3d { height: 1150vh; }
+.scrolly.is-3d { height: 720vh; }
 .scrolly.is-3d .stage { position: sticky; top: 0; height: 100vh; height: 100dvh; overflow: hidden; padding: 0; }
 .scrolly.is-3d .stage__fallback { display: none; }
 .scrolly.is-3d .stage__canvas { display: block; position: absolute; inset: 0; width: 100%; height: 100%; }
@@ -103,12 +103,18 @@
 }
 
 .scrolly.is-3d .stage__skip {
-  display: inline-block; position: absolute; right: 28px; bottom: 26px; z-index: 5;
-  font-family: var(--font-display); text-transform: uppercase; letter-spacing: 0.14em; font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.65); padding: 10px 16px; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 999px; background: rgba(4, 9, 22, 0.5);
-  transition: color 0.3s, border-color 0.3s;
+  display: inline-flex; align-items: center; gap: 10px; position: absolute; left: 50%; bottom: 28px; translate: -50% 0; z-index: 6;
+  font-family: var(--font-display); text-transform: uppercase; letter-spacing: 0.1em; font-size: 1rem; font-weight: 600;
+  color: var(--ink); background: var(--gold); padding: 14px 26px; border-radius: 999px; border: 3px solid var(--ink);
+  box-shadow: 0 5px 0 var(--ink), 0 14px 34px rgba(0, 0, 0, 0.45);
+  transition: transform 0.2s var(--ease), box-shadow 0.2s var(--ease);
+  animation: kh-nudge 2.4s var(--ease) infinite;
 }
-.scrolly.is-3d .stage__skip:hover { color: var(--gold); border-color: var(--gold); }
+.scrolly.is-3d .stage__skip svg { width: 20px; height: 20px; }
+.scrolly.is-3d .stage__skip:hover { transform: translateY(-2px); box-shadow: 0 7px 0 var(--ink), 0 18px 40px rgba(0, 0, 0, 0.5); animation: none; }
+.stage__skip-short { display: none; }
+@keyframes kh-nudge { 0%, 70%, 100% { transform: translateY(0); } 80% { transform: translateY(5px); } 90% { transform: translateY(-2px); } }
+@media (prefers-reduced-motion: reduce) { .scrolly.is-3d .stage__skip { animation: none; } }
 
 .scrolly.is-3d .stage__loader {
   display: grid; place-items: center; align-content: center; gap: 18px; position: absolute; inset: 0; z-index: 10; background: #040916;
@@ -130,11 +136,13 @@
       linear-gradient(0deg, rgba(3, 7, 18, 0.92) 0%, rgba(3, 7, 18, 0.6) 34%, transparent 58%);
   }
   .hud__rail, .hud__chapters { display: none; }
-  .board { right: 14px; top: calc(var(--header-h) + 14px); width: 230px; }
+  .board { right: 14px; top: calc(var(--header-h) + 14px); width: 205px; }
   .board__pbp { font-size: 0.68rem; padding: 6px 8px; }
   .board > div { padding: 6px 10px; }
   .board__team strong, .board__clock strong { font-size: 1.4rem; }
-  .scrolly.is-3d .stage__skip { top: calc(var(--header-h) + 126px); bottom: auto; right: 14px; left: auto; font-size: 0.68rem; padding: 7px 12px; }
+  .scrolly.is-3d .stage__skip { top: calc(var(--header-h) + 14px); bottom: auto; left: 14px; translate: none; font-size: 0.78rem; padding: 9px 14px; gap: 6px; border-width: 2px; box-shadow: 0 3px 0 var(--ink), 0 8px 20px rgba(0,0,0,.4); }
+  .scrolly.is-3d .stage__skip svg { width: 15px; height: 15px; }
+  .stage__skip-long { display: none; } .stage__skip-short { display: inline; }
   .scrolly.is-3d .beat__cue { margin-top: 20px; }
   .scrolly.is-3d .beat--program { padding: 20px; }
   .beat .beat__lead { font-size: 1.05rem; }

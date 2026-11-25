@@ -74,11 +74,18 @@
   const DLAND = P(Object.assign({}, DST, { fs: 30, bs: 30, fe: 20, be: 20 }));
   const DSHOCK = P({ lean: -6, head: -22, fs: 150, fe: 140, bs: 145, be: 140, fh: 8, fk: 10, bh: 4, bk: 8 });
 
+  const STEAL = 0.556;
+  const HDRIB = P(Object.assign({}, DRIB, { lean: 14, bs: 40 }));
+  const STUMBLE = P({ lean: 34, head: -10, fs: 60, fe: 20, bs: 30, be: 30, fh: 40, fk: 50, bh: -10, bk: 30 });
+  const PDEF = P(Object.assign({}, DST, { fs: 60, bs: 80 }));
+  const SWIPE = P({ lean: 30, head: -4, fs: 78, fe: 6, bs: 40, be: 30, fh: 62, fk: 72, bh: 4, bk: 30, grip: 1 });
+  const KEYSD2A = [[0.5, HDRIB], [STEAL, HDRIB], [0.564, STUMBLE], [0.57, STUMBLE]];
+  const KEYSD2B = [[0.568, STUMBLE], [0.768, DST], [0.8, DJUMP], [0.84, DJUMP], [0.89, DLAND], [0.935, DSHOCK], [1, DSHOCK]];
   const KEYS1 = [[0, STANCE], [0.045, STANCE], [0.056, DRIB], [0.124, DRIB], [0.145, HIGH], [0.178, LOAD], [0.214, SET], [0.24, RELEASE],
     [0.262, FOLLOW], [0.3, LAND], [0.35, LAND], [0.388, WATCH], [0.425, WATCH], [0.452, CELEB], [0.5, CELEB]];
-  const KEYS2 = [[0.5, STANCE], [0.715, STANCE], [0.738, GATHER], [0.762, TAKEOFF], [0.812, COCK], [0.846, COCK2], [0.862, SLAM],
+  const KEYS2 = [[0.5, PDEF], [0.546, PDEF], [STEAL, SWIPE], [0.566, STANCE], [0.715, STANCE], [0.738, GATHER], [0.762, TAKEOFF], [0.812, COCK], [0.846, COCK2], [0.862, SLAM],
     [0.878, HANG], [0.908, HANG2], [0.936, LANDC], [0.966, VPOSE], [1, VPOSE]];
-  const KEYSD1 = [[0, DST], [0.2, DST], [0.226, DJUMP], [0.258, DJUMP], [0.298, DLAND], [0.4, DLAND], [0.44, DSHOCK], [0.5, DSHOCK]];
+  const KEYSD1 = [[0, DST], [0.2, DST], [0.226, DJUMP], [0.258, DJUMP], [0.298, DLAND], [0.4, DLAND], [0.5, DLAND]];
   const KEYSD = [[0.5, DST], [0.768, DST], [0.8, DJUMP], [0.84, DJUMP], [0.89, DLAND], [0.935, DSHOCK], [1, DSHOCK]];
 
   function runPose(phi, drib) {
@@ -210,7 +217,7 @@
         if (p > 0.925) x = lerp(D2X, END2X, easeOut(range(p, 0.925, 0.975)));
       }
       let pose = track(KEYS2, p);
-      const wRun = range(p, 0.56, 0.585) * (1 - range(p, 0.712, 0.738));
+      const wRun = range(p, 0.566, 0.588) * (1 - range(p, 0.712, 0.738));
       if (wRun > 0) { pose = mix(pose, runPose(phi, st.drib), wRun); lift += 0.06 * Math.max(0, Math.sin(2 * phi)) * wRun; }
       let J = solve(x, 1, pose, lift);
       // hang on the rim: lock the front hand onto the rim's front edge
@@ -234,21 +241,34 @@
         else if (p >= 0.256 && p < 0.295) lift = 0.38 * (1 - easeIn(range(p, 0.256, 0.295)));
         return solve(lerp(-3.4, -5.7, sstep(cl)), -1, pose, lift);
       }
-      const sl = range(p, 0.62, 0.765);
-      let x = lerp(DEF0, DEF1, sstep(sl));
-      if (p > 0.89) x = lerp(DEF1, DEF2, sstep(range(p, 0.89, 0.95)));
-      const pose = track(KEYSD, p);
-      if (sl > 0 && sl < 1) { const w = Math.abs(Math.sin(sstep(sl) * 9)); pose.fh += 14 * w; pose.bh -= 6 * w; }
+      // Act II: the Rivals guard dribbles up, gets picked clean, then chases #16 down the floor
+      if (p < STEAL + 0.012) {
+        const x = p < STEAL ? lerp(-12.2, -13.75, range(p, 0.53, STEAL)) : lerp(-13.75, -14.05, range(p, STEAL, STEAL + 0.012));
+        const pose = track(KEYSD2A, p);
+        if (p < STEAL) pose.fe += 24 * Math.cos(frac(range(p, 0.5, STEAL) * 5) * Math.PI * 2);
+        return solve(x, -1, pose, 0);
+      }
+      const cq = Math.pow(range(p, 0.568, 0.775), 1.3);
+      let x = lerp(-14.05, T2X - 1.3, cq);
+      let pose = track(KEYSD2B, p);
+      const wR = range(p, 0.568, 0.585) * (1 - range(p, 0.76, 0.776));
+      if (wR > 0) {
+        const phiD = (cq * 10.4) / 0.9 * Math.PI;
+        const rp = runPose(phiD, 0); rp.fs = 12 + 55 * Math.sin(phiD + Math.PI); rp.fe = 80;
+        pose = mix(pose, rp, wR);
+      }
       let lift = 0;
+      if (p > 0.775) x = lerp(T2X - 1.3, -2.25, easeOut(range(p, 0.775, 0.885)));
+      if (p > 0.89) x = lerp(-2.25, -2.75, sstep(range(p, 0.89, 0.95)));
       if (p > 0.775 && p < 0.826) lift = 0.6 * easeOut(range(p, 0.775, 0.826));
       else if (p >= 0.826 && p < 0.885) lift = 0.6 * (1 - easeIn(range(p, 0.826, 0.885)));
-      return solve(x, -1, pose, lift);
+      return solve(x, 1, pose, lift);
     }
 
     const REL1 = gripPos(playerAt(0.24, 0));
     const REL2 = gripPos(playerAt(0.858, 0));
 
-    function ballAt(p, J) {
+    function ballAt(p, J, D) {
       let b, spin = 0;
       if (p < 0.5) {
         if (p < 0.24) {
@@ -272,7 +292,17 @@
           b = [lerp(0.3, -2.3, easeOut(q)), 0.121 + bounceY(q, [0.75, 0.32, 0.1], [0.42, 0.33, 0.25])]; spin = -21 + easeOut(q) * 20;
         }
       } else {
-        if (p < 0.858) {
+        if (p < STEAL && D) {
+          // Rivals guard dribbling up the floor
+          const f = frac(range(p, 0.5, STEAL) * 5), top = D.handF[1] - 0.12;
+          b = [D.handF[0] - 0.1, 0.121 + (top - 0.121) * Math.pow(Math.abs(2 * f - 1), 0.85)];
+          spin = -range(p, 0.5, STEAL) * 14;
+        } else if (p < 0.566) {
+          // poked loose, straight into #16's hands
+          const q = range(p, STEAL, 0.566), g = gripPos(J);
+          b = [lerp(-13.95, g[0], easeOut(q)), lerp(0.7, g[1], q) + 0.35 * Math.sin(Math.PI * q)];
+          spin = q * 6;
+        } else if (p < 0.858) {
           b = gripPos(J);
           const dw = range(p, 0.57, 0.585) * (1 - range(p, 0.7, 0.715));
           if (dw > 0) {
@@ -326,7 +356,7 @@
       [0.445, function () { return [-4.6, 1.9]; }, 6.5],
       [0.475, function () { return [-4.2, 3.0]; }, 8.5],
       [0.512, function () { return [-3.0, 9.6]; }, 9.0],
-      [0.548, function (J) { return [J.hip[0] + 0.1, 1.15]; }, 3.4],
+      [0.548, function (J) { return [J.hip[0] + 0.9, 1.15]; }, 3.9],
       [0.59, function (J) { return [J.hip[0] + 0.6, 1.3]; }, 4.3],
       [0.7, function (J) { return [J.hip[0] + 0.8, 1.4]; }, 4.5],
       [0.745, function (J) { return [J.hip[0] + 0.6, 1.6]; }, 4.7],
@@ -733,15 +763,16 @@
     const pbpEl = stage.querySelector("[data-pbp]");
     const boardEl = stage.querySelector(".board");
     const PBP = [
-      [0, "KING ball, down 2. 24 seconds left."],
+      [0, "KING ball, down 4. 24 seconds left."],
       [0.12, "Defense closes out. #16 squares up from deep\u2026"],
       [0.24, "#16 rises for three\u2026 shot is up!"],
-      [SCORE1, "GOOD! KING takes the lead, 89\u201388!"],
-      [0.47, "Rivals bring it up, 14 seconds left\u2026"],
-      [0.546, "STOLEN by #16! He\u2019s got nothing but floor ahead!"],
-      [0.74, "One defender back\u2026 #16 takes off!"],
-      [SCORE2, "THROWS IT DOWN AT THE BUZZER!"],
-      [0.9, "FINAL: KING 91, Rivals 88."],
+      [SCORE1, "GOOD! KING within one, 87\u201388!"],
+      [0.47, "Rivals bring it up, 14 seconds left. KING needs a stop\u2026"],
+      [STEAL, "STOLEN by #16! He\u2019s off the other way!"],
+      [0.62, "#16 in the open floor, Rivals guard chasing\u2026"],
+      [0.74, "#16 takes off, chase-down coming\u2026"],
+      [SCORE2, "THROWS IT DOWN AT THE BUZZER! KING WINS!"],
+      [0.9, "FINAL: KING 89, Rivals 88."],
     ];
     let lastPbp = "";
     function gameClock(p) {
@@ -777,7 +808,7 @@
       if (rail) rail.style.transform = "scaleY(" + p.toFixed(4) + ")";
       chapters.forEach(function (c) { const ab = c.getAttribute("data-chapter").split(",").map(Number); c.classList.toggle("is-active", p >= ab[0] && p < ab[1]); });
       if (homeEl) {
-        homeEl.textContent = p >= SCORE2 ? "91" : p >= SCORE1 ? "89" : "86";
+        homeEl.textContent = p >= SCORE2 ? "89" : p >= SCORE1 ? "87" : "84";
         homeEl.classList.toggle("is-hot", (p >= SCORE1 && p < SCORE1 + 0.04) || p >= SCORE2);
       }
       if (awayEl) awayEl.textContent = "88";
@@ -801,7 +832,7 @@
     function frame(p, time) {
       const J = playerAt(p, time);
       const D = defenderAt(p);
-      const b = ballAt(p, J);
+      const b = ballAt(p, J, D);
       const tilt = rimTilt(p);
       const c = camAt(p, J, b);
       const wide = W / H >= 1.1;
@@ -860,7 +891,7 @@
       }
 
       const ballBehindRim = p >= SCORE1 - 0.012 && p < 0.418 || p >= 0.858 && p < 0.886;
-      const ballHeld = p < 0.24 || (p >= 0.5 && p < 0.858);
+      const ballHeld = p < 0.24 || (p >= 0.566 && p < 0.858);
       if (D) drawPerson(D, Object.assign({}, DEFENDER, { mood: p > 0.9 ? "shock" : "" }), null);
       drawPerson(J, PLAYER, ballHeld ? function () { drawBall(b); } : null);
       if (!ballHeld && ballBehindRim) drawBall(b);
@@ -903,7 +934,9 @@
       requestAnimationFrame(loop);
       const dt = Math.min((now - last) / 1000, 0.05); last = now;
       if (!visible && !first) return;
-      prog += (target - prog) * (1 - Math.exp(-dt * (reduce ? 30 : 6)));
+      // gentle easing for slow scrolling, but catch up almost instantly on a fast flick
+      const gap = Math.abs(target - prog);
+      prog += (target - prog) * (1 - Math.exp(-dt * (reduce ? 30 : 7 + gap * 160)));
       if (Math.abs(target - prog) < 1e-5) prog = target;
       frame(prog, now / 1000);
       if (first) { first = false; if (loader) loader.classList.add("is-done"); }
