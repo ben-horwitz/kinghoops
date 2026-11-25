@@ -29,7 +29,7 @@ Shared files:
 The home page opens with real KING Hoops game footage: a drive and dunk from `assets/video/slow-mo-slam.mp4`, 6.6s to 12.4s. Scrolling moves through the play frame by frame. The KING Hoops player is traced with a thin, gently wiggling gold line.
 
 - `assets/story/frames/`: 88 JPEG frames taken from the clip at 15 fps.
-- `assets/story/poses.json`: the KING player's skeleton in each frame. It was traced once with the MoveNet pose-detection model, and the KING player was picked by his dark jersey. Frames where he couldn't be found reliably are left blank. Visitors' browsers don't run the model.
+- `assets/story/poses.json`: the KING player's skeleton in each frame. It was traced once with the MoveNet pose-detection model, and the KING player was picked by his dark jersey. Frames the first pass missed were re-traced on close crops around him, and the few that were still missing are blended from the frames on either side, so the trace never drops out. Visitors' browsers don't run the model.
 - `assets/js/story.js`: draws each frame and the trace over it, and handles the text timing.
 - `assets/css/home3d.css`: layout for the story text and skip button.
 - **Text:** each block in `index.html` has `data-p="start,end"`, which sets when it shows during the scroll.

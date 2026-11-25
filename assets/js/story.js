@@ -16,7 +16,7 @@
 
   // MoveNet keypoints: 0 nose, 5/6 shoulders, 7/8 elbows, 9/10 wrists, 11/12 hips, 13/14 knees, 15/16 ankles
   const BONES = [[5, 7], [7, 9], [6, 8], [8, 10], [5, 6], [5, 11], [6, 12], [11, 12], [11, 13], [13, 15], [12, 14], [14, 16]];
-  const MIN_CONF = 0.22;
+  const MIN_CONF = 0.1;
   const P_START = 0.05, P_END = 0.9; // portion of the scroll that plays the footage
   const DUNK_T = 11.65;               // clip time where the ball goes through
 
@@ -33,9 +33,11 @@
       let a = i - 1, b = i + 1;
       while (a >= 0 && !raw[a]) a--;
       while (b < N && !raw[b]) b++;
-      if (a >= 0 && b < N && b - a <= 5) {
+      if (a >= 0 && b < N) {
         const t = (i - a) / (b - a);
         raw[i] = raw[a].map((k, j) => [k[0] + (raw[b][j][0] - k[0]) * t, k[1] + (raw[b][j][1] - k[1]) * t, Math.min(k[2], raw[b][j][2])]);
+      } else if (a >= 0 || b < N) {
+        raw[i] = (a >= 0 ? raw[a] : raw[b]).map((k) => k.slice()); // hold the nearest pose at the ends
       }
     }
     const king = raw.map((k, i) => k && k.map((q, j) => {
@@ -184,7 +186,7 @@
         ctx.filter = "blur(28px) grayscale(1) brightness(0.32)";
         ctx.drawImage(im, (W - VW * cs) / 2, (H - VH * cs) / 2, VW * cs, VH * cs);
         sh = H - headerH - 48; sw = sh * VW / VH;
-        ox = Math.min(W - sw - 60, W * 0.64 - sw / 2); oy = headerH + 24;
+        ox = W - sw - 60; oy = headerH + 24;
       } else {
         const cs = Math.max(W / VW, H / VH);
         sw = VW * cs; sh = VH * cs; ox = (W - sw) / 2; oy = (H - sh) / 2 - H * 0.08;
