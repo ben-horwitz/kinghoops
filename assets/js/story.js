@@ -22,9 +22,11 @@
 
   function start(data) {
     const ctx = canvas.getContext("2d");
-    const N = data.frames.length;
+    const N = data.frames.length;                 // traced poses (15 fps)
+    const FN = data.video.n, FFPS = data.video.fps; // image frames (30 fps)
     const VW = data.w, VH = data.h;
-    const pDunk = P_START + ((DUNK_T - data.t0) * data.fps / (N - 1)) * (P_END - P_START);
+    const DUR = (FN - 1) / FFPS;
+    const pDunk = P_START + ((DUNK_T - data.video.t0) / DUR) * (P_END - P_START);
 
     /* ---- the KING player's traced pose per frame: bridge short gaps, then smooth ---- */
     const raw = data.frames.map((f) => f.king);
@@ -49,31 +51,55 @@
       return w ? [x / w, y / w, q[2]] : q;
     }));
 
+    // pose at any (fractional) clip time, interpolated between traced frames
+    function poseAt(t) {
+      const pf = clamp((t - data.t0) * data.fps, 0, N - 1);
+      const i0 = Math.floor(pf), i1 = Math.min(N - 1, i0 + 1), a = pf - i0;
+      const A = king[i0], B = king[i1];
+      if (!A || !B) return A || B;
+      return A.map((k, j) => [k[0] + (B[j][0] - k[0]) * a, k[1] + (B[j][1] - k[1]) * a, Math.min(k[2], B[j][2])]);
+    }
+
     /* ---- frames ---- */
-    const imgs = new Array(N), ready = new Array(N).fill(false);
+    const imgs = new Array(FN), ready = new Array(FN).fill(false);
     let firstReady = false;
     const loadOrder = [];
-    for (let step = 16; step >= 1; step = Math.floor(step / 2)) for (let i = 0; i < N; i += step) if (!loadOrder.includes(i)) loadOrder.push(i);
+    for (let step = 16; step >= 1; step = Math.floor(step / 2)) for (let i = 0; i < FN; i += step) if (!loadOrder.includes(i)) loadOrder.push(i);
     loadOrder.forEach((i) => {
       const im = new Image(); im.decoding = "async";
-      im.onload = () => { ready[i] = true; if (!firstReady) { firstReady = true; needs = true; } };
+      im.onload = () => { (im.decode ? im.decode() : Promise.resolve()).catch(() => {}).then(() => { ready[i] = true; needs = true; firstReady = true; }); };
       im.src = "assets/story/frames/f" + String(i).padStart(3, "0") + ".jpg";
       imgs[i] = im;
     });
     function nearestReady(i) {
-      for (let d = 0; d < N; d++) { if (ready[i - d]) return i - d; if (ready[i + d]) return i + d; }
+      for (let d = 0; d < FN; d++) { if (ready[i - d]) return i - d; if (ready[i + d]) return i + d; }
       return -1;
     }
 
     /* ---- sizing ---- */
-    let W = 1, H = 1, dpr = 1, needs = true;
+    // On wide screens the canvas only covers the video panel (far fewer pixels to paint each frame);
+    // the blurred backdrop behind it is a CSS layer the browser composites on the GPU.
+    let W = 1, H = 1, dpr = 1, needs = true, headerH = 76, wide = false, CW = 1, CH = 1;
+    const backdrop = document.createElement("div"); backdrop.className = "stage__backdrop"; backdrop.setAttribute("aria-hidden", "true");
+    stage.insertBefore(backdrop, canvas);
     function resize() {
+      headerH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--header-h")) || 76;
       const r = stage.getBoundingClientRect();
       W = Math.max(1, r.width); H = Math.max(1, r.height);
-      dpr = Math.min(window.devicePixelRatio || 1, 2);
-      canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
+      dpr = Math.min(window.devicePixelRatio || 1, 1.75);
+      wide = W / H >= 1.1;
+      if (wide) {
+        CH = Math.round(H - headerH - 48); CW = Math.round(CH * VW / VH);
+        Object.assign(canvas.style, { left: (W - CW - 60) + "px", top: (headerH + 24) + "px", width: CW + "px", height: CH + "px" });
+      } else {
+        CW = W; CH = H;
+        Object.assign(canvas.style, { left: "0px", top: "0px", width: "100%", height: "100%" });
+      }
+      canvas.classList.toggle("is-panel", wide);
+      canvas.width = Math.round(CW * dpr); canvas.height = Math.round(CH * dpr);
       needs = true;
     }
+    let lastBackdrop = -99;
     new ResizeObserver(resize).observe(stage);
     resize();
 
@@ -101,8 +127,7 @@
       }
       ctx.stroke();
     }
-    function drawTrace(fi, ox, oy, sw, sh, boil) {
-      const k = king[fi];
+    function drawTrace(k, ox, oy, sw, sh, boil) {
       if (!k) return;
       const amp = Math.max(1.2, sh * 0.0028);
       const base = Math.max(1.6, sh / 420);
@@ -164,42 +189,32 @@
       if (flashEl) flashEl.style.opacity = (p >= pDunk ? Math.exp(-(p - pDunk) * 220) * 0.45 : 0).toFixed(3);
     }
 
-    /* ---- render ---- */
+    /* ---- render: cross-fade neighbouring frames so scrubbing is smooth, never steppy ---- */
     let lastKey = "";
     function render(p, time) {
-      const fiWanted = Math.round(range(p, P_START, P_END) * (N - 1));
-      const fi = nearestReady(fiWanted);
+      const ff = range(p, P_START, P_END) * (FN - 1);
+      let i0 = Math.floor(ff), i1 = Math.min(FN - 1, i0 + 1), mixA = ff - i0;
+      if (!ready[i0] || !ready[i1]) { i0 = i1 = nearestReady(Math.round(ff)); mixA = 0; }
       const boil = Math.floor(time * 4); // lines gently re-draw a few times a second, like hand-drawn animation
-      const key = fi + "|" + boil + "|" + W + "x" + H;
+      const key = ff.toFixed(3) + "|" + boil + "|" + CW + "x" + CH + "|" + i0;
       if (key === lastKey && !needs) return;
       lastKey = key; needs = false;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      ctx.fillStyle = "#081633"; ctx.fillRect(0, 0, W, H);
-      if (fi < 0) return;
-      const im = imgs[fi];
-      const wide = W / H >= 1.1;
-      const headerH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--header-h")) || 76;
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = "#081633"; ctx.fillRect(0, 0, CW, CH);
+      if (i0 < 0) return;
+      const imA = imgs[i0], imB = imgs[i1];
       let ox, oy, sw, sh;
       if (wide) {
-        // blurred fill behind, sharp portrait panel on the right
-        const cs = Math.max(W / VW, H / VH);
-        ctx.filter = "blur(28px) grayscale(1) brightness(0.32)";
-        ctx.drawImage(im, (W - VW * cs) / 2, (H - VH * cs) / 2, VW * cs, VH * cs);
-        sh = H - headerH - 48; sw = sh * VW / VH;
-        ox = W - sw - 60; oy = headerH + 24;
+        ox = 0; oy = 0; sw = CW; sh = CH;
+        if (Math.abs(i0 - lastBackdrop) >= 12) { backdrop.style.backgroundImage = "url(" + imA.src + ")"; lastBackdrop = i0; }
       } else {
-        const cs = Math.max(W / VW, H / VH);
-        sw = VW * cs; sh = VH * cs; ox = (W - sw) / 2; oy = (H - sh) / 2 - H * 0.08;
+        const cs = Math.max(CW / VW, CH / VH);
+        sw = VW * cs; sh = VH * cs; ox = (CW - sw) / 2; oy = (CH - sh) / 2 - CH * 0.08;
       }
-      ctx.save();
-      if (wide) { ctx.beginPath(); ctx.roundRect ? ctx.roundRect(ox, oy, sw, sh, 18) : ctx.rect(ox, oy, sw, sh); ctx.clip(); }
-      ctx.filter = "grayscale(0.85) contrast(1.1) brightness(0.85)";
-      ctx.drawImage(im, ox, oy, sw, sh);
-      ctx.filter = "none";
-      ctx.fillStyle = "rgba(12, 34, 90, 0.22)"; ctx.fillRect(ox, oy, sw, sh);
-      drawTrace(fi, ox, oy, sw, sh, boil);
-      ctx.restore();
-      if (wide) { ctx.strokeStyle = "rgba(255,255,255,0.18)"; ctx.lineWidth = 1; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(ox, oy, sw, sh, 18) : ctx.rect(ox, oy, sw, sh); ctx.stroke(); }
+      ctx.drawImage(imA, ox, oy, sw, sh);
+      if (i1 !== i0 && mixA > 0.01) { ctx.globalAlpha = mixA; ctx.drawImage(imB, ox, oy, sw, sh); ctx.globalAlpha = 1; }
+      drawTrace(poseAt(data.video.t0 + ff / FFPS), ox, oy, sw, sh, boil);
     }
 
     /* ---- loop ---- */
@@ -219,8 +234,8 @@
       const dt = Math.min((now - last) / 1000, 0.05); last = now;
       if (!visible) return;
       const gap = Math.abs(target - prog);
-      prog += (target - prog) * (1 - Math.exp(-dt * (8 + gap * 160)));
-      if (Math.abs(target - prog) < 1e-5) prog = target;
+      prog += (target - prog) * (1 - Math.exp(-dt * (6 + gap * 120)));
+      if (Math.abs(target - prog) < 1e-6) prog = target;
       render(prog, now / 1000);
       updateDOM(prog);
       if (!shown && firstReady) { shown = true; if (loader) loader.classList.add("is-done"); }

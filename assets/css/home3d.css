@@ -167,3 +167,13 @@
   .scrolly .beat__num { font-size: clamp(4rem, 18vw, 6rem); }
   .scrolly .beat .beat__label { font-size: clamp(1.25rem, 5.4vw, 1.6rem); }
 }
+
+/* Story canvas: full-screen on phones, a framed panel on wide screens */
+.scrolly.is-3d .stage__canvas.is-panel { border-radius: 18px; box-shadow: 0 0 0 1px rgba(255,255,255,0.16), 0 30px 80px rgba(0,0,0,0.5); }
+.stage__backdrop { display: none; }
+.scrolly.is-3d .stage__backdrop {
+  display: block; position: absolute; inset: -60px; background: #081633 center / cover no-repeat;
+  filter: blur(36px) brightness(0.32) saturate(0.6); transform: translateZ(0); transition: background-image 0.6s;
+}
+@media (max-width: 900px), (max-aspect-ratio: 11/10) { .scrolly.is-3d .stage__backdrop { display: none; } }
+@media (max-width: 900px) { .scrolly.is-3d .beat { right: 72px; } .scrolly.is-3d .beat--center { right: 18px; } }
