@@ -733,8 +733,3 @@ ul { margin: 0; padding: 0; }
 .social--dark a { background: var(--navy); width: 40px; height: 40px; }
 .social--dark svg { width: 17px; height: 17px; }
 .footer .social { display: flex; }
-
-/* Home: static alumni photo row (no repeated images) */
-.alumni-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; }
-.alumni-grid img { width: 100%; aspect-ratio: 3 / 4; object-fit: cover; border-radius: var(--radius); }
-@media (max-width: 760px) { .alumni-grid { grid-template-columns: repeat(2, 1fr); } .alumni-grid img:last-child { grid-column: 1 / -1; aspect-ratio: 16 / 10; } }

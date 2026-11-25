@@ -24,19 +24,6 @@ Shared files:
 - `assets/img/`: all photos, downloaded from the Wix site (file names are the original Wix media IDs).
 - `assets/video/`: hero and "On Screen" videos with poster images.
 
-## The home page story
-
-The home page opens with real KING Hoops game footage: a drive and dunk from `assets/video/slow-mo-slam.mp4`, 6.6s to 12.4s. Scrolling moves through the play frame by frame. The KING Hoops player is traced with a thin, gently wiggling gold line.
-
-- `assets/story/frames/`: 175 JPEG frames taken from the clip at 30 fps. The colour grade is baked in, so no filters run while you scroll.
-- `assets/story/poses.json`: the KING player's skeleton in each frame. It was traced once with the MoveNet pose-detection model, and the KING player was picked by his dark jersey. Frames the first pass missed were re-traced on close crops around him, and the few that were still missing are blended from the frames on either side, so the trace never drops out. Visitors' browsers don't run the model.
-- `assets/js/story.js`: draws each frame and the trace over it, and handles the text timing.
-  - Between two frames it cross-fades them and interpolates the trace, so scrubbing stays smooth.
-  - On wide screens the canvas only covers the video panel, and the blurred backdrop is a CSS layer.
-- `assets/css/home3d.css`: layout for the story text and skip button.
-- **Text:** each block in `index.html` has `data-p="start,end"`, which sets when it shows during the scroll.
-- **Classic version:** the original site is saved on the `classic` branch (tag `v1-classic`).
-
 ## Run locally
 
 ```bash
