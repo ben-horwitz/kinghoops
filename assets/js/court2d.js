@@ -78,6 +78,7 @@
     [0.262, FOLLOW], [0.3, LAND], [0.35, LAND], [0.388, WATCH], [0.425, WATCH], [0.452, CELEB], [0.5, CELEB]];
   const KEYS2 = [[0.5, STANCE], [0.715, STANCE], [0.738, GATHER], [0.762, TAKEOFF], [0.812, COCK], [0.846, COCK2], [0.862, SLAM],
     [0.878, HANG], [0.908, HANG2], [0.936, LANDC], [0.966, VPOSE], [1, VPOSE]];
+  const KEYSD1 = [[0, DST], [0.2, DST], [0.226, DJUMP], [0.258, DJUMP], [0.298, DLAND], [0.4, DLAND], [0.44, DSHOCK], [0.5, DSHOCK]];
   const KEYSD = [[0.5, DST], [0.768, DST], [0.8, DJUMP], [0.84, DJUMP], [0.89, DLAND], [0.935, DSHOCK], [1, DSHOCK]];
 
   function runPose(phi, drib) {
@@ -223,7 +224,16 @@
       return J;
     }
     function defenderAt(p) {
-      if (p < 0.5) return null;
+      if (p < 0.5) {
+        // closes out on the shooter, jumps a beat too late
+        const cl = range(p, 0.11, 0.21);
+        const pose = track(KEYSD1, p);
+        if (cl > 0 && cl < 1) { const w = Math.abs(Math.sin(sstep(cl) * 10)); pose.fh += 16 * w; pose.bh -= 6 * w; }
+        let lift = 0;
+        if (p > 0.222 && p < 0.256) lift = 0.38 * easeOut(range(p, 0.222, 0.256));
+        else if (p >= 0.256 && p < 0.295) lift = 0.38 * (1 - easeIn(range(p, 0.256, 0.295)));
+        return solve(lerp(-3.4, -5.7, sstep(cl)), -1, pose, lift);
+      }
       const sl = range(p, 0.62, 0.765);
       let x = lerp(DEF0, DEF1, sstep(sl));
       if (p > 0.89) x = lerp(DEF1, DEF2, sstep(range(p, 0.89, 0.95)));
@@ -524,7 +534,7 @@
       text("KING HOOPS NYC", t[0], t[1], 0.42, GOLD, { sx: 1.5 });
     }
 
-    function drawStanchion(fx, tilt) {
+    function drawStanchion(fx, tilt, buzzer) {
       layer(1);
       // base + pole + arm
       poly([[1.15, 0], [2.45, 0], [2.45, 0.85], [1.15, 0.85]], NAVY);
@@ -539,6 +549,13 @@
       poly([[BOARD_X, 2.9], [BOARD_X + 0.14, 2.94], [BOARD_X + 0.14, 4.02], [BOARD_X, 3.98]], "rgba(220, 238, 255, 0.85)", O * 2.5);
       if (glow) { ctx.restore(); poly([[BOARD_X, 2.9], [BOARD_X + 0.14, 2.94], [BOARD_X + 0.14, 4.02], [BOARD_X, 3.98]], glow, 0); }
       chain([[BOARD_X + 0.02, 3.08], [BOARD_X + 0.02, 3.52]], 0.035, "#ff4b2b");
+      if (buzzer > 0) {
+        // red buzzer lights around the backboard
+        ctx.save(); ctx.shadowColor = "#ff2a2a"; ctx.shadowBlur = 40 * buzzer;
+        ctx.strokeStyle = "rgba(255, 50, 40," + (0.4 + 0.6 * buzzer).toFixed(2) + ")"; ctx.lineWidth = 0.07; ctx.lineJoin = "round";
+        ctx.beginPath(); ctx.moveTo(BOARD_X, 2.9); ctx.lineTo(BOARD_X + 0.14, 2.94); ctx.lineTo(BOARD_X + 0.14, 4.02); ctx.lineTo(BOARD_X, 3.98); ctx.closePath(); ctx.stroke();
+        ctx.restore();
+      }
       chain([[BOARD_X - 0.02, 2.88], [BOARD_X + 0.16, 2.92]], 0.06, NAVY);
       // rim bracket
       const a = rimPt(RIM_R, 0, tilt);
@@ -710,7 +727,28 @@
     });
     const rail = stage.querySelector(".hud__fill");
     const chapters = Array.prototype.slice.call(stage.querySelectorAll("[data-chapter]"));
-    const scoreEl = stage.querySelector("[data-score]");
+    const homeEl = stage.querySelector("[data-score-home]");
+    const awayEl = stage.querySelector("[data-score-away]");
+    const periodEl = stage.querySelector("[data-period]");
+    const pbpEl = stage.querySelector("[data-pbp]");
+    const boardEl = stage.querySelector(".board");
+    const PBP = [
+      [0, "KING ball, down 2. 24 seconds left."],
+      [0.12, "Defense closes out. #16 squares up from deep\u2026"],
+      [0.24, "#16 rises for three\u2026 shot is up!"],
+      [SCORE1, "GOOD! KING takes the lead, 89\u201388!"],
+      [0.47, "Rivals bring it up, 14 seconds left\u2026"],
+      [0.546, "STOLEN by #16! He\u2019s got nothing but floor ahead!"],
+      [0.74, "One defender back\u2026 #16 takes off!"],
+      [SCORE2, "THROWS IT DOWN AT THE BUZZER!"],
+      [0.9, "FINAL: KING 91, Rivals 88."],
+    ];
+    let lastPbp = "";
+    function gameClock(p) {
+      if (p <= SCORE1) return 24 - 10 * (p / SCORE1);
+      if (p <= 0.555) return 14 - 5 * range(p, SCORE1, 0.555);
+      return Math.max(0, 9 - 9 * range(p, 0.555, 0.866));
+    }
     const clockEl = stage.querySelector("[data-clock]");
     const flashEl = stage.querySelector(".stage__flash");
     const loader = stage.querySelector(".stage__loader");
@@ -738,13 +776,20 @@
       }
       if (rail) rail.style.transform = "scaleY(" + p.toFixed(4) + ")";
       chapters.forEach(function (c) { const ab = c.getAttribute("data-chapter").split(",").map(Number); c.classList.toggle("is-active", p >= ab[0] && p < ab[1]); });
-      if (scoreEl) scoreEl.textContent = p >= SCORE2 ? "5" : p >= SCORE1 ? "3" : "0";
-      if (clockEl) {
-        let c = 24;
-        if (p < SCORE1) c = 24 * (1 - p / SCORE1);
-        else if (p < 0.52) c = 24;
-        else if (p < SCORE2) c = 24 * (1 - range(p, 0.52, SCORE2));
-        clockEl.textContent = String(Math.ceil(c)).padStart(2, "0");
+      if (homeEl) {
+        homeEl.textContent = p >= SCORE2 ? "91" : p >= SCORE1 ? "89" : "86";
+        homeEl.classList.toggle("is-hot", (p >= SCORE1 && p < SCORE1 + 0.04) || p >= SCORE2);
+      }
+      if (awayEl) awayEl.textContent = "88";
+      const gc = gameClock(p);
+      if (clockEl) clockEl.textContent = gc >= 10 ? "0:" + String(Math.floor(gc)).padStart(2, "0") : (Math.floor(gc * 10) / 10).toFixed(1);
+      const final = p >= 0.866;
+      if (periodEl) periodEl.textContent = final ? "Final" : "4th Qtr";
+      if (boardEl) boardEl.classList.toggle("is-final", final);
+      if (pbpEl) {
+        let msg = PBP[0][1];
+        for (const e of PBP) if (p >= e[0]) msg = e[1];
+        if (msg !== lastPbp) { pbpEl.textContent = msg; lastPbp = msg; }
       }
       if (flashEl) {
         const f = Math.max(p >= SCORE1 ? Math.exp(-(p - SCORE1) * 300) : 0, p >= SCORE2 ? Math.exp(-(p - SCORE2) * 240) : 0);
@@ -781,7 +826,8 @@
       const bq = range(p, which, which + 0.04);
       if (p >= SCORE1 && bq < 1) burst(RIM[0] + 0.05, RIM[1] + 0.1, 0.3 + easeOut(bq) * (which === SCORE2 ? 2.4 : 1.8), 1 - easeIn(bq), which === SCORE2 ? 14 : 12, GOLD, "#fff3c4");
 
-      drawStanchion(fx, tilt);
+      const BUZZ = 0.866;
+      drawStanchion(fx, tilt, p >= BUZZ ? (p < 0.95 ? 0.55 + 0.45 * Math.max(0, Math.sin(time * 9)) : 0.5) : 0);
       // shadows
       shadow(J.hip[0] + 0.05, J.hip[1] - 1.0, 0.45);
       if (D) shadow(D.hip[0], D.hip[1] - 1.0, 0.42);
