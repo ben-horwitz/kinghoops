@@ -59,11 +59,13 @@
   const WATCH = P({ lean: 5, head: -18, fs: 16, fe: 25, bs: 14, be: 25, fh: 10, fk: 14, bh: 6, bk: 12, grip: 1 });
   const CELEB = P({ lean: 0, head: -6, fs: 172, fe: 14, bs: 22, be: 40, fh: 12, fk: 14, bh: 6, bk: 12, grip: 1 });
 
-  const GATHER = P({ lean: 18, head: -8, fs: 52, fe: 90, bs: 46, be: 92, fh: 60, fk: 70, bh: 10, bk: 40, grip: 0.2, bx: 0.12, by: 0.02 });
-  const TAKEOFF = P({ lean: 8, head: -16, fs: 130, fe: 60, bs: 124, be: 60, fh: 95, fk: 100, bh: -5, bk: 10, bt: 35, grip: 0.5, bx: 0.05, by: 0.12 });
-  const COCK = P({ lean: -10, head: -16, fs: 200, fe: 92, bs: 150, be: 25, fh: 70, fk: 110, bh: 20, bk: 80, ft: 25, bt: 30, grip: 1, bx: -0.02, by: 0.11 });
-  const COCK2 = P(Object.assign({}, COCK, { fs: 212, fe: 100, lean: -15 }));
-  const SLAM = P({ lean: 16, head: -6, fs: 142, fe: 14, bs: 160, be: 10, fh: 50, fk: 90, bh: 10, bk: 70, ft: 20, bt: 30, grip: 1, bx: 0.08, by: 0.1 });
+  // Dunk poses traced from KING Hoops' own slow-mo dunk clip (assets/video/slow-mo-slam.mp4, 10.8s-11.7s),
+  // redrawn side-on: two-hand gather at the chest, knee-drive takeoff, ball cocked high in both hands, two-hand flush.
+  const GATHER = P({ lean: 12, head: -6, fs: 60, fe: 95, bs: 55, be: 100, fh: 40, fk: 30, bh: -30, bk: 55, grip: 0, bx: 0.14, by: 0.04 });
+  const TAKEOFF = P({ lean: 2, head: -12, fs: 165, fe: 25, bs: 160, be: 30, fh: 85, fk: 95, bh: -8, bk: 10, bt: 40, grip: 0, bx: 0.05, by: 0.12 });
+  const COCK = P({ lean: -8, head: -10, fs: 195, fe: 55, bs: 190, be: 60, fh: 75, fk: 100, bh: 5, bk: 40, ft: 20, bt: 30, grip: 0, bx: -0.02, by: 0.12 });
+  const COCK2 = P(Object.assign({}, COCK, { fs: 205, fe: 65, bs: 200, be: 70, lean: -10 }));
+  const SLAM = P({ lean: 15, head: -6, fs: 145, fe: 10, bs: 140, be: 15, fh: 50, fk: 90, bh: 10, bk: 70, ft: 20, bt: 30, grip: 0, bx: 0.1, by: 0.06 });
   const HANG = P({ lean: 4, head: -4, fs: 178, fe: 4, bs: 175, be: 4, fh: 55, fk: 95, bh: 35, bk: 70, ft: 30, bt: 30, grip: 1 });
   const HANG2 = P(Object.assign({}, HANG, { fh: 25, fk: 50, bh: 14, bk: 40 }));
   const LANDC = P({ lean: 30, head: -20, fs: 60, fe: 40, bs: 60, be: 40, fh: 70, fk: 105, bh: 66, bk: 100, grip: 1 });
@@ -89,12 +91,12 @@
   const KEYSD = [[0.5, DST], [0.768, DST], [0.8, DJUMP], [0.84, DJUMP], [0.89, DLAND], [0.935, DSHOCK], [1, DSHOCK]];
 
   function runPose(phi, drib) {
-    const s = Math.sin(phi), c = Math.cos(phi);
-    return P({ lean: 22, head: -6,
-      fh: 15 + 48 * s, fk: 25 + 70 * Math.max(0, c),
-      bh: 15 - 48 * s, bk: 25 + 70 * Math.max(0, -c),
-      fs: 30, fe: 40 + 22 * Math.cos(drib * Math.PI * 2),
-      bs: 12 - 55 * s, be: 80, grip: 1, bx: 0.05, by: -0.12 });
+    const s = Math.sin(phi), c = Math.cos(phi), d = Math.cos(drib * Math.PI * 2);
+    return P({ lean: 26, head: -8,
+      fh: 20 + 55 * s, fk: 30 + 85 * Math.max(0, c),
+      bh: 20 - 55 * s, bk: 30 + 85 * Math.max(0, -c),
+      fs: 38 + 10 * d, fe: 25 + 25 * d,
+      bs: 10 - 60 * s, be: 95, grip: 1, bx: 0.08, by: -0.12 });
   }
 
   /* --------------------------------------------------------- skeleton */
@@ -186,7 +188,7 @@
       }
     }
     const confetti = [];
-    { const r = rng(17); const cols = [GOLD, NAVY, "#ffffff", BLUE, ORANGE];
+    { const r = rng(17); const cols = [GOLD, "#ffffff"];
       for (let i = 0; i < 110; i++) { const a = -Math.PI / 2 + (r() - 0.5) * 2.6; const s = 2 + r() * 4; confetti.push({ vx: Math.cos(a + Math.PI) * s * (r() < 0.5 ? -1 : 1), vy: 3 + r() * 5, c: cols[i % cols.length], w: 0.06 + r() * 0.06, rot: r() * 6, spin: (r() - 0.5) * 20, sway: r() * 6 }); } }
 
     /* ---- choreography ---- */
@@ -206,7 +208,7 @@
       }
       const s = runS(p);
       let x = lerp(A2X, T2X, s), lift = 0;
-      const phi = (s * (T2X - A2X)) / 0.9 * Math.PI;
+      const phi = (s * (T2X - A2X)) / 1.5 * Math.PI;
       st.phi = phi; st.drib = phi / (Math.PI * 2);
       if (p > 0.755) {
         const q = range(p, 0.755, 0.846);
@@ -218,7 +220,7 @@
       }
       let pose = track(KEYS2, p);
       const wRun = range(p, 0.566, 0.588) * (1 - range(p, 0.712, 0.738));
-      if (wRun > 0) { pose = mix(pose, runPose(phi, st.drib), wRun); lift += 0.06 * Math.max(0, Math.sin(2 * phi)) * wRun; }
+      if (wRun > 0) { pose = mix(pose, runPose(phi, st.drib), wRun); lift += 0.1 * Math.max(0, Math.sin(2 * phi)) * wRun; }
       let J = solve(x, 1, pose, lift);
       // hang on the rim: lock the front hand onto the rim's front edge
       const wh = range(p, 0.858, 0.874) * (1 - range(p, 0.906, 0.918));
@@ -253,7 +255,7 @@
       let pose = track(KEYSD2B, p);
       const wR = range(p, 0.568, 0.585) * (1 - range(p, 0.76, 0.776));
       if (wR > 0) {
-        const phiD = (cq * 10.4) / 0.9 * Math.PI;
+        const phiD = (cq * 10.4) / 1.5 * Math.PI;
         const rp = runPose(phiD, 0); rp.fs = 12 + 55 * Math.sin(phiD + Math.PI); rp.fe = 80;
         pose = mix(pose, rp, wR);
       }
@@ -355,7 +357,7 @@
       [0.412, function () { return [0.05, 2.45]; }, 2.6],
       [0.445, function () { return [-4.6, 1.9]; }, 6.5],
       [0.475, function () { return [-4.2, 3.0]; }, 8.5],
-      [0.512, function () { return [-3.0, 9.6]; }, 9.0],
+      [0.512, function () { return [-8.0, 1.8]; }, 7.0],
       [0.548, function (J) { return [J.hip[0] + 0.9, 1.15]; }, 3.9],
       [0.59, function (J) { return [J.hip[0] + 0.6, 1.3]; }, 4.3],
       [0.7, function (J) { return [J.hip[0] + 0.8, 1.4]; }, 4.5],
@@ -395,11 +397,11 @@
       const z = sc * 150 * Math.pow(Z / 150, 0.3) * (H / 900); // backdrops barely react to zoom
       ctx.setTransform(dpr * z, 0, 0, -dpr * z, dpr * (W / 2 + OX - cam.x * k * z), dpr * (H / 2 + OY - (anchorY - cam.y) * Z));
     }
-    function chain(pts, w, color) {
+    function chain(pts, w, color, outline) {
       ctx.lineJoin = "round"; ctx.lineCap = "round";
       ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]);
       for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
-      ctx.strokeStyle = INK; ctx.lineWidth = w + 2 * O; ctx.stroke();
+      ctx.strokeStyle = outline || INK; ctx.lineWidth = w + 2 * O; ctx.stroke();
       ctx.strokeStyle = color; ctx.lineWidth = w; ctx.stroke();
     }
     function circle(x, y, r, fill, outline) {
@@ -426,71 +428,31 @@
       ctx.restore();
     }
 
-    function drawBackground(p, time, fx) {
+    const BG_TOP = "#071331", BG_BOT = "#0e2660", FLOOR = "#163a82", LINE = "#ffffff";
+    function drawBackground() {
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       const g = ctx.createLinearGradient(0, 0, 0, H);
-      g.addColorStop(0, "#081738"); g.addColorStop(0.6, "#12306f"); g.addColorStop(1, "#1d4796");
+      g.addColorStop(0, BG_TOP); g.addColorStop(1, BG_BOT);
       ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-
-      // rafters, lamps, banners (slow parallax)
-      layer(0.3, 0.5, 2.75);
-      const xa = cam.x * 0.3 - 40, xb = cam.x * 0.3 + 40;
-      ctx.fillStyle = "#060f28";
-      ctx.fillRect(xa, 17.6, xb - xa, 3.6);
-      ctx.strokeStyle = "#1b3672"; ctx.lineWidth = 0.08;
-      ctx.beginPath();
-      for (let x = Math.floor(xa); x < xb; x += 1) { ctx.moveTo(x, 17.7); ctx.lineTo(x + 0.5, 18.6); ctx.lineTo(x + 1, 17.7); }
-      ctx.moveTo(xa, 17.7); ctx.lineTo(xb, 17.7); ctx.moveTo(xa, 18.6); ctx.lineTo(xb, 18.6);
-      ctx.stroke();
-      for (let x = Math.floor(xa / 4) * 4; x < xb; x += 4) {
-        // light beam
-        ctx.fillStyle = "rgba(255, 236, 190, 0.055)";
-        ctx.beginPath(); ctx.moveTo(x - 0.25, 17.5); ctx.lineTo(x + 0.25, 17.5); ctx.lineTo(x + 3, 0); ctx.lineTo(x - 3, 0); ctx.closePath(); ctx.fill();
-        circle(x, 17.5, 0.32, "#fff3c4");
-        circle(x, 17.5, 0.16, "#ffffff", false);
-      }
-      banners.forEach(function (c, i) {
-        const bx = -6 + i * 2.4, by = 15.4 + Math.sin(time * 0.6 + i) * 0.03;
-        ctx.save(); ctx.translate(bx, by); ctx.scale(1, -1);
-        ctx.drawImage(c, -0.85, -1.7, 1.7, 3.4);
-        ctx.restore();
-        ctx.strokeStyle = "#8aa0d0"; ctx.lineWidth = 0.03;
-        ctx.beginPath(); ctx.moveTo(bx - 0.6, by + 1.7); ctx.lineTo(bx - 0.6, 17.6); ctx.moveTo(bx + 0.6, by + 1.7); ctx.lineTo(bx + 0.6, 17.6); ctx.stroke();
-      });
-
-      // crowd (mid parallax)
+      // stands: a few faint tier lines and a row of ceiling lights, drawn as line art
       layer(0.55, 0.5, 2.7);
       const cx0 = cam.x * 0.55;
-      for (let row = 8; row >= 0; row--) {
-        const ry = 0.2 + row * 0.62;
-        ctx.fillStyle = row % 2 ? "#0e2560" : "#11296a";
-        ctx.fillRect(cx0 - 45, ry - 0.45, 90, 0.62);
-        for (const c of crowd) {
-          if (c.row !== row || Math.abs(c.x - cx0) > 28) continue;
-          const excited = fx > 0.12 && c.fan;
-          const jump = excited ? Math.abs(Math.sin(time * 9 + c.s * 20)) * 0.16 * Math.min(1, fx * 2) : 0;
-          const y = ry + Math.sin(time * 2.2 + c.s * 30) * 0.02 + jump;
-          if (excited) chain([[c.x - 0.12, y + 0.18], [c.x - 0.22, y + 0.5]], 0.06, c.shirt), chain([[c.x + 0.12, y + 0.18], [c.x + 0.22, y + 0.5]], 0.06, c.shirt);
-          ctx.beginPath(); ctx.moveTo(c.x - 0.19, y - 0.3); ctx.lineTo(c.x - 0.19, y + 0.12);
-          ctx.quadraticCurveTo(c.x - 0.19, y + 0.24, c.x, y + 0.24); ctx.quadraticCurveTo(c.x + 0.19, y + 0.24, c.x + 0.19, y + 0.12);
-          ctx.lineTo(c.x + 0.19, y - 0.3); ctx.closePath();
-          ctx.fillStyle = c.shirt; ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = O * 1.6; ctx.stroke();
-          circle(c.x, y + 0.38, 0.13, c.skin);
-          // camera flashes
-          if (hash(Math.floor(time * 7) + c.s * 991) < 0.012 + fx * 0.2) {
-            const fy = y + 0.38, fxp = c.x + 0.16, s = 0.22;
-            ctx.fillStyle = "#ffffff";
-            ctx.beginPath(); ctx.moveTo(fxp, fy + s); ctx.lineTo(fxp + s * 0.2, fy + s * 0.2); ctx.lineTo(fxp + s, fy); ctx.lineTo(fxp + s * 0.2, fy - s * 0.2);
-            ctx.lineTo(fxp, fy - s); ctx.lineTo(fxp - s * 0.2, fy - s * 0.2); ctx.lineTo(fxp - s, fy); ctx.lineTo(fxp - s * 0.2, fy + s * 0.2); ctx.closePath(); ctx.fill();
-          }
-        }
+      ctx.strokeStyle = "rgba(255,255,255,0.09)"; ctx.lineWidth = 0.05;
+      ctx.beginPath();
+      for (let r = 0; r < 7; r++) { const y = 0.5 + r * 0.7; ctx.moveTo(cx0 - 60, y); ctx.lineTo(cx0 + 60, y); }
+      ctx.stroke();
+      ctx.fillStyle = "rgba(255,255,255,0.07)";
+      for (let r = 0; r < 6; r++) for (let x = Math.floor(cx0 - 40); x < cx0 + 40; x += 0.7) {
+        ctx.beginPath(); ctx.arc(x + (r % 2) * 0.35, 0.82 + r * 0.7, 0.16, 0, Math.PI * 2); ctx.fill();
+      }
+      layer(0.3, 0.5, 2.75);
+      const xl = cam.x * 0.3;
+      for (let x = Math.floor((xl - 40) / 4) * 4; x < xl + 40; x += 4) {
+        ctx.beginPath(); ctx.arc(x, 17.5, 0.22, 0, Math.PI * 2); ctx.fillStyle = "rgba(255,255,255,0.8)"; ctx.fill();
       }
     }
+    function dimBackdrop() {}
 
-    function dimBackdrop() {
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      ctx.fillStyle = "rgba(8, 20, 56, 0.38)"; ctx.fillRect(0, 0, W, H);
-    }
     // The floor is drawn as a real court seen from above at an angle: floor point (x along the
     // court, z toward the viewer) → screen. Players, ball and hoop stand on the z = 0 line.
     const DEPTH = 0.26, SPREAD = 0.05;
@@ -508,88 +470,55 @@
       layer(1);
       const BASE = 1.575, FAR = BASE - 28, HALF = BASE - 14, FT = BASE - 5.8, SIDE = 7.5;
       const xa = cam.x - 60, xb = cam.x + 60;
-      // ad boards along the far side
-      const adTop = fp(0, -SIDE - 0.9)[1];
-      poly([[xa, adTop], [xb, adTop], [xb, adTop + 0.55], [xa, adTop + 0.55]], NAVY);
-      ctx.fillStyle = GOLD; ctx.fillRect(xa, adTop + 0.48, xb - xa, 0.05);
-      for (let x = Math.floor(xa / 5) * 5; x < xb; x += 5) {
-        const odd = Math.round(x / 5) % 2;
-        text(odd ? "KING HOOPS" : "PEOPLE FIRST · ATHLETES SECOND", x + 2.5, adTop + 0.27, odd ? 0.34 : 0.21, odd ? GOLD : "#ffffff");
-      }
-      // apron (navy surround)
-      floorPath([[xa, -SIDE - 0.9], [xb, -SIDE - 0.9], [xb, SIDE + 3], [xa, SIDE + 3]]); ctx.closePath();
-      ctx.fillStyle = "#0c2250"; ctx.fill();
-      // hardwood
-      floorPath([[FAR, -SIDE], [BASE, -SIDE], [BASE, SIDE], [FAR, SIDE]]); ctx.closePath();
-      ctx.fillStyle = "#e7b47a"; ctx.fill();
-      for (let z = -SIDE, k = 0; z < SIDE; z += 0.5, k++) {
-        if (k % 2) continue;
-        floorPath([[FAR, z], [BASE, z], [BASE, z + 0.5], [FAR, z + 0.5]]); ctx.closePath();
-        ctx.fillStyle = "rgba(196, 128, 62, 0.16)"; ctx.fill();
-      }
-      ctx.strokeStyle = "rgba(150, 88, 34, 0.25)"; ctx.lineWidth = O * 0.8;
-      for (let x = Math.ceil(FAR); x < BASE; x += 1.6) { floorPath([[x, -SIDE], [x + 0.3, SIDE]]); ctx.stroke(); }
-      // painted areas
       const fillPath = function (pts, col) { floorPath(pts); ctx.closePath(); ctx.fillStyle = col; ctx.fill(); };
-      fillPath([[FT, -2.45], [BASE, -2.45], [BASE, 2.45], [FT, 2.45]], NAVY);
-      fillPath(arcPts(HALF, 0, 1.8, 0, Math.PI * 2, 48), NAVY);
-      // lines
-      ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 0.06; ctx.lineJoin = "round"; ctx.lineCap = "round";
       const line = function (pts) { floorPath(pts); ctx.stroke(); };
-      line([[FAR, -SIDE], [BASE, -SIDE], [BASE, SIDE], [FAR, SIDE]]);
+      fillPath([[xa, -SIDE - 0.9], [xb, -SIDE - 0.9], [xb, SIDE + 3], [xa, SIDE + 3]], "#0b2154");
+      ctx.strokeStyle = GOLD; ctx.lineWidth = 0.05; line([[xa, -SIDE - 0.9], [xb, -SIDE - 0.9]]);
+      fillPath([[FAR, -SIDE], [BASE, -SIDE], [BASE, SIDE], [FAR, SIDE]], FLOOR);
+      ctx.strokeStyle = "rgba(255,255,255,0.05)"; ctx.lineWidth = 0.03;
+      for (let z = -SIDE + 0.6; z < SIDE; z += 0.6) line([[FAR, z], [BASE, z]]);
+      fillPath([[FT, -2.45], [BASE, -2.45], [BASE, 2.45], [FT, 2.45]], "rgba(255,255,255,0.07)");
+      fillPath([[FAR, -2.45], [FAR + 5.8, -2.45], [FAR + 5.8, 2.45], [FAR, 2.45]], "rgba(255,255,255,0.07)");
+      ctx.strokeStyle = LINE; ctx.lineWidth = 0.055; ctx.lineJoin = "round"; ctx.lineCap = "round";
+      line([[FAR, -SIDE], [BASE, -SIDE], [BASE, SIDE], [FAR, SIDE], [FAR, -SIDE]]);
       line([[HALF, -SIDE], [HALF, SIDE]]);
-      line(arcPts(HALF, 0, 1.8, 0, Math.PI * 2, 48));
       line([[FT, -2.45], [BASE, -2.45]]); line([[FT, 2.45], [BASE, 2.45]]); line([[FT, -2.45], [FT, 2.45]]);
       line(arcPts(FT, 0, 1.8, Math.PI / 2, Math.PI * 1.5, 24));
       ctx.setLineDash([0.3, 0.25]); line(arcPts(FT, 0, 1.8, Math.PI * 1.5, Math.PI * 2.5, 24)); ctx.setLineDash([]);
       line(arcPts(0, 0, 1.25, Math.PI / 2, Math.PI * 1.5, 24));
       const a3 = Math.asin(6.6 / 6.75);
       line([[BASE, -6.6], [-Math.cos(a3) * 6.75, -6.6]]);
-      line(arcPts(0, 0, 6.75, Math.PI / 2 + (Math.PI / 2 - a3), Math.PI * 1.5 - (Math.PI / 2 - a3), 60));
       line([[BASE, 6.6], [-Math.cos(a3) * 6.75, 6.6]]);
-      // far end of the court (other basket's key, mostly off screen)
-      fillPath([[FAR, -2.45], [FAR + 5.8, -2.45], [FAR + 5.8, 2.45], [FAR, 2.45]], NAVY);
+      line(arcPts(0, 0, 6.75, Math.PI - a3, Math.PI + a3, 60));
       line([[FAR + 5.8, -2.45], [FAR + 5.8, 2.45]]);
-      line(arcPts(FAR, 0, 6.75, -Math.PI / 2 + (Math.PI / 2 - a3), Math.PI / 2 - (Math.PI / 2 - a3), 60));
-      // centre-court logo
-      if (logo.complete && logo.naturalWidth) {
-        const c = fp(HALF, 0);
-        ctx.save(); ctx.translate(c[0], c[1]); ctx.scale(1, -DEPTH * 1.1);
-        const w = 2.6, h = w * logo.naturalHeight / logo.naturalWidth;
-        ctx.drawImage(logo, -w / 2, -h / 2, w, h);
-        ctx.restore();
-      }
-      // near apron lettering
-      const t = fp(-6, SIDE + 1.1);
-      text("KING HOOPS NYC", t[0], t[1], 0.42, GOLD, { sx: 1.5 });
+      line(arcPts(FAR, 0, 6.75, -a3, a3, 60));
+      ctx.strokeStyle = GOLD; ctx.lineWidth = 0.07;
+      line(arcPts(HALF, 0, 1.8, 0, Math.PI * 2, 48));
+      line(arcPts(HALF, 0, 0.6, 0, Math.PI * 2, 32));
     }
 
     function drawStanchion(fx, tilt, buzzer) {
       layer(1);
-      // base + pole + arm
-      poly([[1.15, 0], [2.45, 0], [2.45, 0.85], [1.15, 0.85]], NAVY);
-      text("KING", 1.8, 0.45, 0.32, GOLD);
-      chain([[1.85, 0.8], [1.85, 3.55]], 0.2, "#2a3146");
-      chain([[1.85, 0.4], [1.85, 2.1]], 0.3, NAVY);
-      chain([[1.85, 3.5], [0.6, 3.5]], 0.12, "#2a3146");
-      chain([[1.75, 2.7], [0.62, 3.3]], 0.07, "#2a3146");
-      // backboard (seen a little from the side)
-      const glow = fx > 0 ? "rgba(255, 188, 54," + (0.25 + fx * 0.75).toFixed(2) + ")" : null;
-      if (glow) { ctx.save(); ctx.shadowColor = "#ffbc36"; ctx.shadowBlur = 60 * fx; }
-      poly([[BOARD_X, 2.9], [BOARD_X + 0.14, 2.94], [BOARD_X + 0.14, 4.02], [BOARD_X, 3.98]], "rgba(220, 238, 255, 0.85)", O * 2.5);
-      if (glow) { ctx.restore(); poly([[BOARD_X, 2.9], [BOARD_X + 0.14, 2.94], [BOARD_X + 0.14, 4.02], [BOARD_X, 3.98]], glow, 0); }
-      chain([[BOARD_X + 0.02, 3.08], [BOARD_X + 0.02, 3.52]], 0.035, "#ff4b2b");
+      const W_ = LINE;
+      poly([[1.15, 0], [2.45, 0], [2.45, 0.85], [1.15, 0.85]], BG_BOT, 0);
+      ctx.strokeStyle = W_; ctx.lineWidth = O * 2; ctx.strokeRect(1.15, 0, 1.3, 0.85);
+      chain([[1.85, 0.85], [1.85, 3.5], [0.6, 3.5]], 0.12, BG_BOT, W_);
+      chain([[1.75, 2.7], [0.62, 3.3]], 0.05, BG_BOT, W_);
+      const bp = [[BOARD_X, 2.9], [BOARD_X + 0.14, 2.94], [BOARD_X + 0.14, 4.02], [BOARD_X, 3.98]];
+      if (fx > 0) { ctx.save(); ctx.shadowColor = GOLD; ctx.shadowBlur = 60 * fx; }
+      poly(bp, BG_BOT, 0);
+      ctx.strokeStyle = fx > 0.05 ? GOLD : W_; ctx.lineWidth = O * 2.5; ctx.lineJoin = "round";
+      ctx.beginPath(); bp.forEach(function (q, i) { i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]); }); ctx.closePath(); ctx.stroke();
+      if (fx > 0) ctx.restore();
+      chain([[BOARD_X + 0.02, 3.08], [BOARD_X + 0.02, 3.52]], 0.02, W_, W_);
       if (buzzer > 0) {
-        // red buzzer lights around the backboard
-        ctx.save(); ctx.shadowColor = "#ff2a2a"; ctx.shadowBlur = 40 * buzzer;
-        ctx.strokeStyle = "rgba(255, 50, 40," + (0.4 + 0.6 * buzzer).toFixed(2) + ")"; ctx.lineWidth = 0.07; ctx.lineJoin = "round";
-        ctx.beginPath(); ctx.moveTo(BOARD_X, 2.9); ctx.lineTo(BOARD_X + 0.14, 2.94); ctx.lineTo(BOARD_X + 0.14, 4.02); ctx.lineTo(BOARD_X, 3.98); ctx.closePath(); ctx.stroke();
+        ctx.save(); ctx.shadowColor = "#ff3b30"; ctx.shadowBlur = 40 * buzzer;
+        ctx.strokeStyle = "rgba(255, 70, 60," + (0.4 + 0.6 * buzzer).toFixed(2) + ")"; ctx.lineWidth = 0.07;
+        ctx.beginPath(); bp.forEach(function (q, i) { i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]); }); ctx.closePath(); ctx.stroke();
         ctx.restore();
       }
-      chain([[BOARD_X - 0.02, 2.88], [BOARD_X + 0.16, 2.92]], 0.06, NAVY);
-      // rim bracket
       const a = rimPt(RIM_R, 0, tilt);
-      chain([a, [BOARD_X, 3.02]], 0.05, ORANGE);
+      chain([a, [BOARD_X, 3.02]], 0.04, GOLD, BG_BOT);
     }
 
     // net rings (rim plane coords), deformed by the ball and the swish whip
@@ -633,7 +562,7 @@
             ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y);
           }
         }
-        ctx.strokeStyle = pass ? (front ? "#ffffff" : "#c9d3e8") : INK;
+        ctx.strokeStyle = pass ? (front ? "#ffffff" : "rgba(255,255,255,0.55)") : BG_BOT;
         ctx.lineWidth = pass ? 0.018 : 0.018 + O * 1.6;
         ctx.stroke();
       }
@@ -645,106 +574,67 @@
         const a = half === "back" ? (k / 32) * Math.PI : Math.PI + (k / 32) * Math.PI;
         pts.push(rimPt(Math.cos(a) * RIM_R, Math.sin(a) * RIM_R, tilt));
       }
-      chain(pts, 0.035, half === "back" ? "#c94e12" : ORANGE);
+      chain(pts, 0.035, half === "back" ? "#c98d1c" : GOLD, BG_BOT);
     }
 
+    // Line-art player. KING: solid white figure, gold jersey. Rivals: hollow outline figure.
     function drawPerson(J, look, ballFn) {
-      const f = J.f, td = J.td;
-      const perp = [td[1] * f, -td[0] * f]; // torso forward normal
+      const td = J.td, f = J.f;
+      const out = look.outline, fill = look.fill, back = look.back, lw = look.lw;
+      const mid = function (a, b, t) { return [lerp(a[0], b[0], t), lerp(a[1], b[1], t)]; };
       // back leg + back arm
-      chain([J.hip, J.kneeB, J.ankB], 0.13, look.skinB);
-      chain([J.ankB, J.toeB], 0.11, look.shoeB);
-      chain([J.hip, [lerp(J.hip[0], J.kneeB[0], 0.5), lerp(J.hip[1], J.kneeB[1], 0.5)]], 0.2, look.shortsB);
-      chain([J.shB, J.elbB, J.handB], 0.1, look.skinB);
-      circle(J.handB[0], J.handB[1], 0.055, look.skinB);
+      chain([J.hip, J.kneeB, J.ankB, J.toeB], lw, back, out);
+      chain([J.shB, J.elbB, J.handB], lw * 0.85, back, out);
       // shorts + torso
-      const shortsEnd = add(J.hip, [-td[0], -td[1]], 0.12);
-      chain([add(J.hip, td, 0.06), shortsEnd], 0.34, look.shorts);
-      chain([add(J.hip, td, 0.1), add(J.hip, td, L.torso - 0.06)], 0.32, look.jersey);
-      // jersey side stripe + number
-      ctx.save();
-      ctx.beginPath(); ctx.moveTo(J.hip[0] + perp[0] * -0.13, J.hip[1] + perp[1] * -0.13);
-      const sTop = add(J.hip, td, L.torso - 0.08);
-      ctx.lineTo(sTop[0] - perp[0] * 0.13, sTop[1] - perp[1] * 0.13);
-      ctx.strokeStyle = look.trim; ctx.lineWidth = 0.04; ctx.stroke(); ctx.restore();
-      const nm = add(J.hip, td, 0.34);
-      text(look.number, nm[0] + perp[0] * 0.03, nm[1] + perp[1] * 0.03, 0.2, look.numColor, { rot: Math.atan2(td[0], td[1]), stroke: look.trim, strokeW: 0.035 });
-      chain([add(shortsEnd, td, 0.04), add(shortsEnd, td, 0.08)], 0.345, look.trim);
+      chain([J.hip, mid(J.hip, J.kneeB, 0.45)], lw * 1.9, look.shorts, out);
+      chain([add(J.hip, td, 0.04), add(J.hip, [-td[0], -td[1]], 0.1)], 0.3, look.shorts, out);
+      chain([add(J.hip, td, 0.12), add(J.hip, td, L.torso - 0.06)], 0.3, look.jersey, out);
+      const nm = add(J.hip, td, 0.33);
+      text(look.number, nm[0], nm[1], 0.19, look.numColor, { rot: Math.atan2(td[0], td[1]) });
       // neck + head
-      chain([add(J.shoulder, td, -0.02), J.neck], 0.1, look.skin);
-      const hc = J.headC, r = L.head, hd = J.hd;
-      const hf = [hd[1] * f, -hd[0] * f]; // face direction
-      circle(hc[0] - hf[0] * 0.02 - hd[0] * 0.01, hc[1] - hf[1] * 0.02 - hd[1] * 0.01, 0.045, look.skin); // ear (behind)
-      circle(hc[0], hc[1], r, look.skin);
-      // hair cap
-      const ang = Math.atan2(hd[1], hd[0]);
-      ctx.beginPath();
-      ctx.arc(hc[0], hc[1], r, ang - f * 1.25, ang + f * 2.0, f < 0);
-      ctx.closePath();
-      if (look.hair) { ctx.fillStyle = look.hair; ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = O * 2; ctx.stroke(); }
-      // headband
-      if (look.band) chain([add(add(hc, hd, 0.05), hf, -r * 0.98), add(add(hc, hd, 0.05), hf, r * 0.98)], 0.04, look.band);
-      // face
-      const eye = add(add(hc, hf, 0.085), hd, 0.01);
-      circle(eye[0], eye[1], 0.017, INK, false);
-      ctx.beginPath();
-      const m = add(add(hc, hf, 0.07), hd, -0.06);
-      ctx.arc(m[0], m[1], 0.035, look.mood === "shock" ? 0 : Math.PI * 1.05, look.mood === "shock" ? Math.PI * 2 : Math.PI * 1.95);
-      ctx.strokeStyle = INK; ctx.lineWidth = O * 1.5; ctx.stroke();
+      chain([add(J.shoulder, td, -0.02), J.neck], lw * 0.9, fill, out);
+      circle(J.headC[0], J.headC[1], L.head, fill, false);
+      ctx.beginPath(); ctx.arc(J.headC[0], J.headC[1], L.head, 0, Math.PI * 2); ctx.strokeStyle = out; ctx.lineWidth = O * 2; ctx.stroke();
       // front leg
-      chain([J.hip, J.kneeF, J.ankF], 0.135, look.skin);
-      const sockTop = [lerp(J.ankF[0], J.kneeF[0], 0.26), lerp(J.ankF[1], J.kneeF[1], 0.26)];
-      chain([J.ankF, sockTop], 0.14, "#ffffff");
-      chain([J.ankF, J.toeF], 0.115, look.shoe);
-      chain([add(J.ankF, [0, -1], 0.045), add(J.toeF, [0, -1], 0.045)], 0.03, "#ffffff");
-      chain([J.hip, [lerp(J.hip[0], J.kneeF[0], 0.5), lerp(J.hip[1], J.kneeF[1], 0.5)]], 0.21, look.shorts);
-      const sockTopB = [lerp(J.ankB[0], J.kneeB[0], 0.26), lerp(J.ankB[1], J.kneeB[1], 0.26)];
-      chain([J.ankB, sockTopB], 0.13, "#dfe5f0");
+      chain([J.hip, J.kneeF, J.ankF, J.toeF], lw * 1.05, fill, out);
+      chain([J.hip, mid(J.hip, J.kneeF, 0.45)], lw * 1.95, look.shorts, out);
       if (ballFn) ballFn();
       // front arm
-      chain([J.shoulder, J.elbF, J.handF], 0.105, look.skin);
-      const wb = [lerp(J.handF[0], J.elbF[0], 0.2), lerp(J.handF[1], J.elbF[1], 0.2)];
-      chain([J.handF, wb], 0.11, look.trim);
-      circle(J.handF[0], J.handF[1], 0.058, look.skin);
+      chain([J.shoulder, J.elbF, J.handF], lw * 0.9, fill, out);
     }
+    const PLAYER = { fill: "#ffffff", back: "#b9c6e2", outline: "#0b1d4a", shorts: "#ffffff", jersey: GOLD, number: "16", numColor: "#0b1d4a", lw: 0.11 };
+    const DEFENDER = { fill: "#0e2660", back: "#0b1f4f", outline: "#ffffff", shorts: "#0e2660", jersey: "#0e2660", number: "00", numColor: "#ffffff", lw: 0.11 };
 
     function drawBall(b) {
       const r = 0.121;
-      circle(b.x, b.y, r, ORANGE);
+      circle(b.x, b.y, r, GOLD, false);
       ctx.save();
       ctx.beginPath(); ctx.arc(b.x, b.y, r, 0, Math.PI * 2); ctx.clip();
       ctx.translate(b.x, b.y); ctx.rotate(b.spin);
-      ctx.strokeStyle = INK; ctx.lineWidth = O * 1.4;
+      ctx.strokeStyle = "#0b1d4a"; ctx.lineWidth = O * 1.3;
       ctx.beginPath(); ctx.moveTo(-r, 0); ctx.lineTo(r, 0); ctx.moveTo(0, -r); ctx.lineTo(0, r);
       ctx.moveTo(-r * 0.7, -r); ctx.quadraticCurveTo(-r * 0.15, 0, -r * 0.7, r);
       ctx.moveTo(r * 0.7, -r); ctx.quadraticCurveTo(r * 0.15, 0, r * 0.7, r);
-      ctx.stroke();
-      ctx.restore();
-      // shine
-      ctx.beginPath(); ctx.arc(b.x - r * 0.35, b.y + r * 0.4, r * 0.22, 0, Math.PI * 2); ctx.fillStyle = "rgba(255,255,255,0.55)"; ctx.fill();
+      ctx.stroke(); ctx.restore();
+      ctx.beginPath(); ctx.arc(b.x, b.y, r, 0, Math.PI * 2); ctx.strokeStyle = "#0b1d4a"; ctx.lineWidth = O * 2; ctx.stroke();
     }
     function shadow(x, h, w) {
       const s = Math.max(0.35, 1 - h * 0.35);
       ctx.beginPath(); ctx.ellipse(x, 0.02, w * s, 0.07 * s, 0, 0, Math.PI * 2);
-      ctx.fillStyle = "rgba(10, 20, 48, " + (0.28 * s).toFixed(3) + ")"; ctx.fill();
+      ctx.fillStyle = "rgba(0, 6, 24, " + (0.35 * s).toFixed(3) + ")"; ctx.fill();
     }
-    function burst(x, y, scale, alpha, spikes, c1, c2) {
+    // comic "action lines" radiating from the rim on a score
+    function burst(x, y, scale, alpha, spikes) {
       if (alpha <= 0) return;
-      ctx.save(); ctx.globalAlpha = alpha;
-      const pts = [];
+      ctx.save(); ctx.globalAlpha = alpha; ctx.strokeStyle = GOLD; ctx.lineCap = "round"; ctx.lineWidth = 0.05;
+      ctx.beginPath();
       for (let i = 0; i < spikes * 2; i++) {
-        const a = (i / (spikes * 2)) * Math.PI * 2 + 0.2;
-        const rr = (i % 2 ? 0.55 : 1) * scale * (1 + 0.12 * hash(i + spikes));
-        pts.push([x + Math.cos(a) * rr, y + Math.sin(a) * rr]);
+        const a = (i / (spikes * 2)) * Math.PI * 2 + 0.15;
+        const r0 = scale * (0.45 + 0.1 * hash(i)), r1 = scale * (0.9 + 0.25 * hash(i + 7));
+        ctx.moveTo(x + Math.cos(a) * r0, y + Math.sin(a) * r0); ctx.lineTo(x + Math.cos(a) * r1, y + Math.sin(a) * r1);
       }
-      poly(pts, c1, O * 3);
-      const pts2 = pts.map(function (q) { return [x + (q[0] - x) * 0.62, y + (q[1] - y) * 0.62]; });
-      poly(pts2, c2, 0);
-      ctx.restore();
+      ctx.stroke(); ctx.restore();
     }
-
-    const PLAYER = { skin: "#ffbc36", skinB: "#e09a12", hair: null, jersey: NAVY, shorts: NAVY, shortsB: "#0f2b60", trim: GOLD, shoe: "#ffffff", shoeB: "#dfe5f0", number: "16", numColor: "#ffffff", band: NAVY };
-    const DEFENDER = { skin: "#9aa4b8", skinB: "#7c869b", hair: null, jersey: "#f4f4f4", shorts: "#f4f4f4", shortsB: "#d9dde6", trim: "#c8243c", shoe: "#222a3a", shoeB: "#151b28", number: "00", numColor: "#c8243c", band: null };
 
     /* ---- DOM hooks ---- */
     const beats = Array.prototype.map.call(stage.querySelectorAll("[data-p]"), function (el) {
@@ -847,7 +737,7 @@
       const f1 = p >= SCORE1 ? Math.exp(-(p - SCORE1) * 60) : 0;
       const fx = Math.max(f1, f2, p >= SCORE2 ? Math.exp(-(p - SCORE2) * 25) * 0.6 : 0);
 
-      drawBackground(p, time, Math.max(fx, p > SCORE1 && p < 0.47 ? 0.4 : 0, p > SCORE2 ? 0.5 : 0));
+      drawBackground();
       dimBackdrop();
       drawCourt();
       layer(1);
@@ -855,7 +745,7 @@
       // score burst behind the hoop
       const which = p >= SCORE2 ? SCORE2 : SCORE1;
       const bq = range(p, which, which + 0.04);
-      if (p >= SCORE1 && bq < 1) burst(RIM[0] + 0.05, RIM[1] + 0.1, 0.3 + easeOut(bq) * (which === SCORE2 ? 2.4 : 1.8), 1 - easeIn(bq), which === SCORE2 ? 14 : 12, GOLD, "#fff3c4");
+      if (p >= SCORE1 && bq < 1) burst(RIM[0] + 0.05, RIM[1] + 0.05, 0.4 + easeOut(bq) * (which === SCORE2 ? 2.2 : 1.6), 1 - easeIn(bq), which === SCORE2 ? 14 : 11);
 
       const BUZZ = 0.866;
       drawStanchion(fx, tilt, p >= BUZZ ? (p < 0.95 ? 0.55 + 0.45 * Math.max(0, Math.sin(time * 9)) : 0.5) : 0);
@@ -892,7 +782,7 @@
 
       const ballBehindRim = p >= SCORE1 - 0.012 && p < 0.418 || p >= 0.858 && p < 0.886;
       const ballHeld = p < 0.24 || (p >= 0.566 && p < 0.858);
-      if (D) drawPerson(D, Object.assign({}, DEFENDER, { mood: p > 0.9 ? "shock" : "" }), null);
+      if (D) drawPerson(D, DEFENDER, null);
       drawPerson(J, PLAYER, ballHeld ? function () { drawBall(b); } : null);
       if (!ballHeld && ballBehindRim) drawBall(b);
       drawNet(net, true);
@@ -909,7 +799,6 @@
           const y = RIM[1] + 0.2 + k.vy * tt - 4.5 * tt * tt;
           ctx.save(); ctx.translate(x, y); ctx.rotate(k.rot + k.spin * tt);
           ctx.fillStyle = k.c; ctx.fillRect(-k.w / 2, -k.w * 0.3, k.w, k.w * 0.6);
-          ctx.strokeStyle = INK; ctx.lineWidth = O; ctx.strokeRect(-k.w / 2, -k.w * 0.3, k.w, k.w * 0.6);
           ctx.restore();
         });
         ctx.restore();

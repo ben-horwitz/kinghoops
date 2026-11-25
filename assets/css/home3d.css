@@ -19,6 +19,8 @@
 .beat .beat__lead { font-size: clamp(1.1rem, 1.6vw, 1.45rem); line-height: 1.55; color: #fff; }
 .beat .beat__quote { font-family: var(--font-display); text-transform: uppercase; font-size: clamp(2rem, 4.2vw, 3.9rem); line-height: 1.02; color: #fff; text-wrap: balance; }
 .beat__num { font-family: var(--font-display); font-weight: 700; font-size: clamp(4.2rem, 11vw, 10rem); line-height: 0.9; color: var(--gold); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; margin-bottom: 14px; text-shadow: 0 0 60px rgba(255, 188, 54, 0.35); }
+.beat .beat__label { font-family: var(--font-display); text-transform: uppercase; letter-spacing: 0.08em; font-size: clamp(1.1rem, 1.8vw, 1.6rem); color: #fff; margin: 0; }
+.beat .beat__label--big { font-size: clamp(1.4rem, 2.6vw, 2.4rem); color: var(--gold); }
 .beat .beat__tag { font-family: var(--font-display); text-transform: uppercase; letter-spacing: 0.12em; color: var(--gold); font-size: 0.95rem; margin-top: 18px; }
 .beat .card__link { color: var(--gold); font-weight: 600; }
 .beat .btn-row { margin-top: 26px; }
@@ -33,7 +35,7 @@
 .scrolly.is-3d .stage__vignette {
   display: block; position: absolute; inset: 0; pointer-events: none;
   background:
-    linear-gradient(90deg, rgba(6, 14, 38, 0.82) 0%, rgba(6, 14, 38, 0.45) 36%, transparent 58%);
+    linear-gradient(90deg, rgba(5, 12, 34, 0.55) 0%, rgba(5, 12, 34, 0.2) 34%, transparent 52%);
 }
 .scrolly.is-3d .stage__flash { display: block; position: absolute; inset: 0; pointer-events: none; opacity: 0; background: radial-gradient(60% 60% at 55% 45%, rgba(255, 214, 130, 0.9), rgba(255, 188, 54, 0) 70%); mix-blend-mode: screen; }
 
