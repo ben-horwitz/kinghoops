@@ -1,0 +1,138 @@
+/* KING Hoops — 3D scroll story on the home page.
+   Without WebGL (or if the module fails) the beats render as a plain stacked story. */
+.scrolly { position: relative; background: #040916; color: #fff; isolation: isolate; }
+.scrolly .stage { position: relative; padding: calc(var(--header-h) + 40px) 0 80px; }
+.stage__canvas, .stage__vignette, .stage__flash, .hud, .bigword, .stage__loader, .stage__skip, .beat__cue { display: none; }
+.stage__fallback { position: absolute; inset: 0; background: center / cover no-repeat; opacity: 0.28; z-index: -1; }
+.scrolly .beat { position: relative; max-width: 720px; margin: 0 auto; padding: 36px 24px; }
+
+.beat .eyebrow { color: var(--gold); }
+.beat h1, .beat h2, .beat h3 {
+  font-family: var(--font-display); text-transform: uppercase; line-height: 0.95; letter-spacing: 0.005em;
+  margin: 0 0 18px; color: #fff; text-wrap: balance;
+}
+.beat h1 { font-size: clamp(2.6rem, 6vw, 5.6rem); }
+.beat h2 { font-size: clamp(2.2rem, 5vw, 4.6rem); }
+.beat h3 { font-size: clamp(2rem, 4vw, 3.6rem); }
+.beat .accent { color: var(--gold); }
+.beat p { color: rgba(255, 255, 255, 0.86); font-size: clamp(1rem, 1.25vw, 1.15rem); line-height: 1.65; margin: 0 0 16px; }
+.beat .beat__lead { font-size: clamp(1.1rem, 1.6vw, 1.45rem); line-height: 1.55; color: #fff; }
+.beat .beat__quote { font-family: var(--font-display); text-transform: uppercase; font-size: clamp(2rem, 4.2vw, 3.9rem); line-height: 1.02; color: #fff; text-wrap: balance; }
+.beat__num { font-family: var(--font-display); font-weight: 700; font-size: clamp(4.2rem, 11vw, 10rem); line-height: 0.9; color: var(--gold); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; margin-bottom: 14px; text-shadow: 0 0 60px rgba(255, 188, 54, 0.35); }
+.beat .beat__tag { font-family: var(--font-display); text-transform: uppercase; letter-spacing: 0.12em; color: var(--gold); font-size: 0.95rem; margin-top: 18px; }
+.beat .card__link { color: var(--gold); font-weight: 600; }
+.beat .btn-row { margin-top: 26px; }
+.btn--outline-light { --bg: transparent; --fg: #fff; border-color: rgba(255, 255, 255, 0.7); }
+.btn--outline-light:hover { --bg: #fff; --fg: var(--navy); border-color: #fff; }
+
+/* ------------------------------------------------------------ 3D mode */
+.scrolly.is-3d { height: 1150vh; }
+.scrolly.is-3d .stage { position: sticky; top: 0; height: 100vh; height: 100dvh; overflow: hidden; padding: 0; }
+.scrolly.is-3d .stage__fallback { display: none; }
+.scrolly.is-3d .stage__canvas { display: block; position: absolute; inset: 0; width: 100%; height: 100%; }
+.scrolly.is-3d .stage__vignette {
+  display: block; position: absolute; inset: 0; pointer-events: none;
+  background:
+    radial-gradient(120% 90% at 60% 50%, transparent 45%, rgba(2, 5, 14, 0.75) 100%),
+    linear-gradient(90deg, rgba(3, 7, 18, 0.78) 0%, rgba(3, 7, 18, 0.35) 38%, transparent 60%);
+}
+.scrolly.is-3d .stage__flash { display: block; position: absolute; inset: 0; pointer-events: none; opacity: 0; background: radial-gradient(60% 60% at 55% 45%, rgba(255, 214, 130, 0.9), rgba(255, 188, 54, 0) 70%); mix-blend-mode: screen; }
+
+.scrolly.is-3d .beat {
+  position: absolute; margin: 0; padding: 0; z-index: 3;
+  left: max(28px, 6vw); top: 50%; translate: 0 -50%;
+  width: min(560px, 40vw);
+  opacity: 0; visibility: hidden; pointer-events: none; will-change: opacity, transform;
+  text-shadow: 0 2px 24px rgba(0, 0, 0, 0.55);
+}
+.scrolly.is-3d .beat.is-on { visibility: visible; pointer-events: auto; }
+.scrolly.is-3d .beat--hero { width: min(640px, 46vw); }
+.scrolly.is-3d .beat--center { left: 50%; translate: -50% -50%; width: min(900px, 86vw); text-align: center; }
+.scrolly.is-3d .beat--center h2 { font-size: clamp(2.6rem, 6.4vw, 6.4rem); }
+.scrolly.is-3d .beat--final { width: min(620px, 46vw); }
+.scrolly.is-3d .beat--program {
+  padding: 28px 30px; border-radius: var(--radius);
+  background: linear-gradient(160deg, rgba(21, 57, 124, 0.55), rgba(5, 11, 28, 0.55));
+  border: 1px solid rgba(255, 255, 255, 0.12); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.35);
+}
+.scrolly.is-3d .beat__cue {
+  display: inline-flex; align-items: center; gap: 12px; margin-top: 36px;
+  font-family: var(--font-display); text-transform: uppercase; letter-spacing: 0.14em; font-size: 0.85rem; color: rgba(255, 255, 255, 0.7);
+}
+.mouse { width: 22px; height: 34px; border: 2px solid rgba(255, 255, 255, 0.7); border-radius: 12px; position: relative; }
+.mouse::after { content: ""; position: absolute; left: 50%; top: 6px; width: 3px; height: 7px; margin-left: -1.5px; border-radius: 2px; background: var(--gold); animation: kh-wheel 1.6s var(--ease) infinite; }
+@keyframes kh-wheel { 0% { transform: translateY(0); opacity: 1; } 70% { transform: translateY(10px); opacity: 0; } 100% { opacity: 0; } }
+
+.scrolly.is-3d .bigword {
+  display: grid; place-items: center; position: absolute; inset: 0; z-index: 2; pointer-events: none; visibility: hidden; opacity: 0;
+  font-family: var(--font-display); font-weight: 700; text-transform: uppercase; line-height: 1;
+  font-size: clamp(5rem, 21vw, 22rem); letter-spacing: 0.02em;
+  color: transparent; -webkit-text-stroke: 2px rgba(255, 188, 54, 0.95);
+  text-shadow: 0 0 80px rgba(255, 188, 54, 0.45);
+  will-change: opacity, transform;
+}
+.scrolly.is-3d .bigword--slam { color: rgba(255, 255, 255, 0.92); -webkit-text-stroke: 0; text-shadow: 0 0 60px rgba(255, 120, 40, 0.7), 0 10px 0 rgba(255, 188, 54, 0.9); font-style: italic; }
+
+/* HUD */
+.scrolly.is-3d .hud { display: block; position: absolute; inset: 0; pointer-events: none; z-index: 4; }
+.hud__rail { position: absolute; right: 30px; top: 50%; height: 34vh; translate: 0 -50%; width: 2px; background: rgba(255, 255, 255, 0.16); border-radius: 2px; overflow: hidden; }
+.hud__fill { position: absolute; inset: 0; background: linear-gradient(var(--gold), #ff7a2b); transform-origin: top; transform: scaleY(0); }
+.hud__chapters { list-style: none; margin: 0; padding: 0; position: absolute; right: 46px; top: 50%; translate: 0 -50%; display: grid; gap: 12vh; text-align: right; }
+.hud__chapters li { font-family: var(--font-display); text-transform: uppercase; letter-spacing: 0.14em; font-size: 0.78rem; color: rgba(255, 255, 255, 0.38); transition: color 0.4s, transform 0.4s var(--ease); }
+.hud__chapters li b { color: inherit; margin-right: 6px; }
+.hud__chapters li.is-active { color: #fff; transform: translateX(-6px); }
+.hud__chapters li.is-active b { color: var(--gold); }
+.board {
+  position: absolute; right: 28px; top: calc(var(--header-h) + 26px); display: flex; gap: 2px; overflow: hidden;
+  border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.14); background: rgba(4, 9, 22, 0.6); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  font-family: var(--font-display); text-transform: uppercase;
+}
+.board > div { padding: 8px 14px; display: grid; justify-items: center; line-height: 1; }
+.board__team span { font-size: 0.7rem; letter-spacing: 0.18em; color: rgba(255, 255, 255, 0.6); }
+.board__team strong { font-size: 1.9rem; color: #fff; margin-top: 4px; }
+.board__clock { background: rgba(255, 255, 255, 0.05); }
+.board__clock small { font-size: 0.62rem; letter-spacing: 0.16em; color: rgba(255, 255, 255, 0.5); }
+.board__clock strong { font-size: 1.9rem; color: #ff5a3c; margin-top: 4px; font-variant-numeric: tabular-nums; text-shadow: 0 0 18px rgba(255, 90, 60, 0.6); }
+
+.scrolly.is-3d .stage__skip {
+  display: inline-block; position: absolute; right: 28px; bottom: 26px; z-index: 5;
+  font-family: var(--font-display); text-transform: uppercase; letter-spacing: 0.14em; font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.65); padding: 10px 16px; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 999px; background: rgba(4, 9, 22, 0.5);
+  transition: color 0.3s, border-color 0.3s;
+}
+.scrolly.is-3d .stage__skip:hover { color: var(--gold); border-color: var(--gold); }
+
+.scrolly.is-3d .stage__loader {
+  display: grid; place-items: center; align-content: center; gap: 18px; position: absolute; inset: 0; z-index: 10; background: #040916;
+  transition: opacity 0.8s var(--ease), visibility 0.8s;
+  font-family: var(--font-display); text-transform: uppercase; letter-spacing: 0.2em; font-size: 0.85rem; color: rgba(255, 255, 255, 0.6);
+}
+.stage__loader img { width: 64px; height: auto; animation: kh-bounce 0.9s cubic-bezier(.5, 0, .5, 1) infinite alternate; }
+@keyframes kh-bounce { from { transform: translateY(-14px); } to { transform: translateY(10px); } }
+.stage__loader.is-done { opacity: 0; visibility: hidden; }
+
+@media (max-width: 900px) {
+  .scrolly.is-3d .beat, .scrolly.is-3d .beat--hero, .scrolly.is-3d .beat--final {
+    left: 18px; right: 18px; width: auto; top: auto; bottom: 30px; translate: none;
+  }
+  .scrolly.is-3d .beat--center { left: 18px; right: 18px; width: auto; top: 50%; translate: 0 -50%; }
+  .scrolly.is-3d .stage__vignette {
+    background:
+      radial-gradient(120% 80% at 50% 35%, transparent 45%, rgba(2, 5, 14, 0.7) 100%),
+      linear-gradient(0deg, rgba(3, 7, 18, 0.92) 0%, rgba(3, 7, 18, 0.6) 34%, transparent 58%);
+  }
+  .hud__rail, .hud__chapters { display: none; }
+  .board { right: 14px; top: calc(var(--header-h) + 14px); }
+  .board > div { padding: 6px 10px; }
+  .board__team strong, .board__clock strong { font-size: 1.4rem; }
+  .scrolly.is-3d .stage__skip { top: calc(var(--header-h) + 18px); bottom: auto; left: 14px; right: auto; font-size: 0.7rem; padding: 8px 12px; }
+  .scrolly.is-3d .beat__cue { margin-top: 20px; }
+  .scrolly.is-3d .beat--program { padding: 20px; }
+  .beat .beat__lead { font-size: 1.05rem; }
+  .scrolly.is-3d .beat--hero p { font-size: 0.98rem; }
+}
+@media (max-width: 900px) and (max-height: 760px) {
+  .scrolly.is-3d .beat h1 { font-size: 2.3rem; }
+  .scrolly.is-3d .beat p { font-size: 0.92rem; line-height: 1.5; }
+}

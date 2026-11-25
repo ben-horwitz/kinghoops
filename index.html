@@ -16,6 +16,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/style.css">
+<link rel="stylesheet" href="assets/css/home3d.css">
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to content</a>
@@ -41,36 +42,133 @@
 
 <main id="main">
 
-<section class="hero">
-  <div class="hero__media"><video autoplay muted loop playsinline preload="auto" poster="assets/video/home.jpg"><source src="assets/video/home.mp4" type="video/mp4"></video></div>
-  <div class="container hero__anim">
-    <h1>Building leaders <span class="accent">on and off</span> the court</h1>
-    <p>KING Hoops is a non-profit organization creating opportunities for New York City youth to thrive on the court, in the classroom, and throughout life.</p>
-    <div class="btn-row">
-      <a class="btn" href="https://kinghoops.leagueapps.com/classes/5108678-2026-king-hoops-fall-tryouts" target="_blank" rel="noopener">Register for Tryouts <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
-      <a class="btn btn--white" href="donate.html">Support Our Youth</a>
+<section class="scrolly" id="experience" aria-label="The KING Hoops story">
+  <div class="stage">
+    <canvas class="stage__canvas" aria-hidden="true"></canvas>
+    <div class="stage__fallback" style="background-image:url(assets/video/home.jpg)" aria-hidden="true"></div>
+    <div class="stage__vignette" aria-hidden="true"></div>
+    <div class="stage__flash" aria-hidden="true"></div>
+
+    <div class="hud" aria-hidden="true">
+      <div class="hud__rail"><span class="hud__fill"></span></div>
+      <ol class="hud__chapters">
+        <li data-chapter="0,0.49"><b>01</b> The Shot</li>
+        <li data-chapter="0.49,0.9"><b>02</b> The Drive</li>
+        <li data-chapter="0.9,1.01"><b>03</b> Join Us</li>
+      </ol>
+      <div class="board">
+        <div class="board__team"><span>KING</span><strong data-score>0</strong></div>
+        <div class="board__clock"><small>Shot clock</small><strong data-clock>24</strong></div>
+      </div>
     </div>
+
+    <div class="beat beat--hero" data-p="0,0.05">
+      <span class="eyebrow">01 &mdash; The Shot</span>
+      <h1>Building leaders <span class="accent">on and off</span> the court</h1>
+      <p>KING Hoops is a non-profit organization creating opportunities for New York City youth to thrive on the court, in the classroom, and throughout life.</p>
+      <div class="btn-row">
+        <a class="btn" href="https://kinghoops.leagueapps.com/classes/5108678-2026-king-hoops-fall-tryouts" target="_blank" rel="noopener">Register for Tryouts <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+        <a class="btn btn--white" href="donate.html">Support Our Youth</a>
+      </div>
+      <div class="beat__cue"><span class="mouse" aria-hidden="true"></span> Scroll to take the shot</div>
+    </div>
+
+    <div class="beat" data-p="0.07,0.15">
+      <span class="eyebrow">Our Mission</span>
+      <p class="beat__quote">At King Hoops, we develop players as <span class="accent">humans first</span> and athletes second.</p>
+    </div>
+
+    <div class="beat" data-p="0.168,0.235">
+      <span class="eyebrow">Rise up</span>
+      <p class="beat__lead">Empowering the youth of New York City through basketball, providing them with academic enrichment, career development, and a strong sense of community to unlock their full potential.</p>
+    </div>
+
+    <div class="beat beat--stat" data-p="0.257,0.295">
+      <span class="eyebrow">Our Impact</span>
+      <div class="beat__num" data-to="150" data-suffix="+">150+</div>
+      <p>Players served annually across Manhattan, Queens, the Bronx, Brooklyn, New Jersey, and Connecticut.</p>
+    </div>
+    <div class="beat beat--stat" data-p="0.319,0.352">
+      <span class="eyebrow">Our Impact</span>
+      <div class="beat__num" data-to="375" data-suffix="+">375+</div>
+      <p>Student-athletes served through our Academic &amp; Life-Skills Program since 2018.</p>
+    </div>
+    <div class="beat beat--stat" data-p="0.376,0.396">
+      <span class="eyebrow">Our Impact</span>
+      <div class="beat__num" data-to="15" data-suffix="+">15+</div>
+      <p>Kids sent to play college basketball in the 2024 and 2025 graduating classes alone.</p>
+    </div>
+
+    <div class="bigword" data-word="0.398,0.45" aria-hidden="true">Swish</div>
+
+    <div class="beat beat--stat" data-p="0.44,0.485">
+      <span class="eyebrow">Nothing but net</span>
+      <div class="beat__num" data-to="400000" data-prefix="$" data-suffix="+">$400,000+</div>
+      <p>Total Scholarships Awarded Since 2018</p>
+      <p class="beat__tag">Holistic. Community-Driven. College-Bound.</p>
+    </div>
+
+    <div class="beat beat--center" data-p="0.508,0.536">
+      <span class="eyebrow">02 &mdash; The Drive</span>
+      <h2>More Than a Basketball Program</h2>
+    </div>
+
+    <div class="beat" data-p="0.56,0.605">
+      <span class="eyebrow">Who we are</span>
+      <p class="beat__lead">KING Hoops is a sports-based youth development organization serving student-athletes across New York City. We believe that every young person deserves access to opportunity, positive mentors, and a community that believes in their potential.</p>
+      <a class="btn btn--outline-light" href="about.html#story">Our Story</a>
+    </div>
+
+    <div class="beat beat--program" data-p="0.628,0.665">
+      <span class="eyebrow">Program 01</span>
+      <h3>AAU Programs</h3>
+      <p>KING Hoops offers competitive basketball teams for 6th-12th graders, competing locally, regionally and nationally. Our teams are coached by high quality, dedicated coaches and are provided with skill development on and off the court.</p>
+      <a class="card__link" href="programs.html#aau">Learn More &rarr;</a>
+    </div>
+    <div class="beat beat--program" data-p="0.688,0.722">
+      <span class="eyebrow">Program 02</span>
+      <h3>Fall Academy</h3>
+      <p>KING Hoops&rsquo; Fall Academy is a targeted program for high school student-athletes with aspirations to play college basketball. The program features strength and conditioning, targeted workshops, and college exploration.</p>
+      <a class="card__link" href="programs.html#fall-academy">Learn More &rarr;</a>
+    </div>
+    <div class="beat beat--program" data-p="0.745,0.775">
+      <span class="eyebrow">Program 03</span>
+      <h3>Clinics</h3>
+      <p>KING Hoops offers a variety of local clinics introducing youth to the fundamentals of basketball in a fun, approachable environment.</p>
+      <a class="card__link" href="programs.html#clinics">Learn More &rarr;</a>
+    </div>
+
+    <div class="beat" data-p="0.798,0.852">
+      <span class="eyebrow">Since 2016</span>
+      <p class="beat__lead">KING Hoops was founded as an AAU program under the community-based organization Kids in the Game (at the time branded as KING, hence the name KING Hoops!).</p>
+      <p>Today, KING Hoops serves more than 150 student-athletes annually, provides over 200 hours of academic and life skills support, and maintains a 100% high school graduation rate.</p>
+    </div>
+
+    <div class="bigword bigword--slam" data-word="0.862,0.915" aria-hidden="true">Slam</div>
+
+    <div class="beat beat--center" data-p="0.918,0.946">
+      <span class="eyebrow">Our Philosophy</span>
+      <h2>People First, <span class="accent">Athletes Second.</span></h2>
+    </div>
+
+    <div class="beat beat--final" data-p="0.97,1">
+      <span class="eyebrow">03 &mdash; Join Us</span>
+      <h2>Help build the next class of King Hoops alumni.</h2>
+      <div class="btn-row">
+        <a class="btn btn--gold" href="donate.html">Donate</a>
+        <a class="btn" href="https://kinghoops.leagueapps.com/classes/5108678-2026-king-hoops-fall-tryouts" target="_blank" rel="noopener">Register for Tryouts</a>
+        <a class="btn btn--outline-light" href="#programs">Keep exploring &darr;</a>
+      </div>
+    </div>
+
+    <a class="stage__skip" href="#programs">Skip the show &darr;</a>
+    <div class="stage__loader" aria-hidden="true"><img src="assets/img/b40c4b_cbb8d89a2e5b42b6bee540deb3fe7c71.png" alt=""><span>Lacing up&hellip;</span></div>
   </div>
-  <div class="scroll-cue" aria-hidden="true"></div>
 </section>
 
 <div class="marquee" aria-hidden="true"><div class="marquee__track"><span>People First</span><span>Athletes Second</span><span>Academics</span><span>Mentorship</span><span>Community</span><span>College-Bound</span><span>People First</span><span>Athletes Second</span><span>Academics</span><span>Mentorship</span><span>Community</span><span>College-Bound</span><span>People First</span><span>Athletes Second</span><span>Academics</span><span>Mentorship</span><span>Community</span><span>College-Bound</span><span>People First</span><span>Athletes Second</span><span>Academics</span><span>Mentorship</span><span>Community</span><span>College-Bound</span></div></div>
 
-<section class="section">
-  <div class="container split">
-    <div class="reveal">
-      <span class="eyebrow">Our Mission</span>
-      <p class="mission-quote">At King Hoops, we develop players as <span class="accent">humans first</span> and athletes second.</p>
-      <p class="lead">Empowering the youth of New York City through basketball, providing them with academic enrichment, career development, and a strong sense of community to unlock their full potential.</p>
-      <a class="btn btn--outline" href="about.html">Our Story <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
-    </div>
-    <div class="reveal">
-      <div class="media-frame"><img src="assets/img/b40c4b_a27da029fa194c34b05cdfc15a7fd5d8.jpg" alt="KING Hoops players at tryouts" loading="lazy"></div>
-    </div>
-  </div>
-</section>
-
-<section class="section section--paper">
+<section class="section section--paper" id="programs">
   <div class="container">
     <div class="section-head center reveal">
       <span class="eyebrow">What we do</span>
@@ -206,5 +304,7 @@
 </div>
 
 <script src="assets/js/main.js" defer></script>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+<script type="module" src="assets/js/court3d.js"></script>
 </body>
 </html>
